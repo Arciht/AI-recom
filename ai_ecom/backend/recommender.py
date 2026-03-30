@@ -1,0 +1,97 @@
+import pandas as pd
+from .Content_Based import content_based_recommend
+from .collaborative import collaborative_recommend
+from .ratingbased import rating_based_recommend
+
+def get_recommendations(user_id=None, user_type: str = "new", top_n: int = 10):
+    """
+    Main recommendation orchestrator.
+    Combines different recommendation strategies based on user type.
+    
+    Args:
+        user_id: Numeric user ID from dataset (for existing users)
+        user_type: "new" or "old"
+        top_n: Number of recommendations to return
+    """
+    try:
+        df = pd.read_csv("backend/data/clean_data.csv")
+        print(f"✅ Loaded dataset with {len(df)} products")
+    except FileNotFoundError:
+        print("❌ Error: clean_data.csv not found. Please run cleaning_data.py first.")
+        return []
+
+    # === New User → Rating Based (Popular Products) ===
+    if user_type == "new" or user_id is None:
+        print(f"🆕 New User detected → Returning Top Rated Products")
+        recommendations = rating_based_recommend(df, top_n)
+        # Convert DataFrame to list of dicts for Reflex frontend
+        return recommendations.to_dict(orient="records")
+
+    # === Existing User → Hybrid Approach ===
+    print(f"👤 Existing User (ID: {user_id}) → Using Hybrid Recommendations")
+
+    # 1. Collaborative Filtering (Similar Users)
+    collab_recs = collaborative_recommend(df, user_id, top_n=top_n // 2 + 2)
+
+    # 2. Content-Based Filtering (Based on one product user liked)
+    content_recs = pd.DataFrame()
+    user_products = df[df['user_id'].astype(str) == str(user_id)]['product_id'].unique()
+
+    if len(user_products) > 0:
+        # Use the first product the user has interacted with
+        sample_product_name = df[df['product_id'] == user_products[0]]['product_name'].iloc[0]
+        content_recs = content_based_recommend(df, sample_product_name, top_n=top_n // 2 + 2)
+    else:
+        # Fallback if no previous products found
+        content_recs = rating_based_recommend(df, top_n=top_n // 2 + 2)
+
+    # Combine both recommendations
+    combined = pd.concat([collab_recs, content_recs], ignore_index=True)
+
+    # Remove duplicates based on product_id
+    combined = combined.drop_duplicates(subset=['product_id'])
+
+    # Sort by rating (best first) and take top_n
+    final_recommendations = combined.nlargest(top_n, 'rating')
+
+    # Convert to list of dictionaries for Reflex State
+    result = final_recommendations[[
+        'product_id',
+        'product_name',
+        'price',
+        'rating',
+        'rating_count',
+        'image_url',
+        'tags',
+        'category'
+    ]].to_dict(orient="records")
+
+    print(f"✅ Final recommendations ready: {len(result)} products")
+    return result
+
+
+# Test function
+def test_recommender():
+    """Test the main recommender"""
+    print("🧪 Testing Recommender System...\n")
+    
+    # Test for New User
+    print("=== Testing New User ===")
+    new_user_recs = get_recommendations(user_id=None, user_type="new", top_n=8)
+    print(f"Returned {len(new_user_recs)} recommendations for new user\n")
+
+    # Test for Existing User (using first user_id from dataset)
+    try:
+        df = pd.read_csv("backend/data/clean_data.csv")
+        sample_user = str(df['user_id'].iloc[0])
+        
+        print(f"=== Testing Existing User (ID: {sample_user}) ===")
+        old_user_recs = get_recommendations(user_id=sample_user, user_type="old", top_n=8)
+        print(f"Returned {len(old_user_recs)} recommendations for existing user")
+        
+    except Exception as e:
+        print(f"Could not test existing user: {e}")
+
+
+if __name__ == "__main__":
+    test_recommender()

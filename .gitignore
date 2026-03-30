@@ -1,0 +1,14 @@
+.states
+*.db
+assets/external/
+.web
+__pycache__/
+*.py[cod]
+.venv/
+env/
+node_modules/
+__pycache__/
+*.env
+firebase_key.json
+*.json
+.env

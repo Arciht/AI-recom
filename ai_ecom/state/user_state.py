@@ -1,0 +1,149 @@
+import reflex as rx
+import os
+import pandas as pd
+import requests
+from dotenv import load_dotenv
+
+load_dotenv()
+
+class UserState(rx.State):
+    """Handles Firebase Authentication + Mapping to Dataset user_id"""
+
+    firebase_uid: str = ""
+    user_id: str = ""           # This will store the integer ID from dataset
+    email: str = ""
+    logged_in: bool = False
+    user_type: str = "new"      # "new" or "old"
+    error_message: str = ""
+
+    # Login Form
+    login_email: str = ""
+    login_password: str = ""
+    signup_email: str = ""
+    signup_password: str = ""
+
+    def set_login_email(self, value: str):
+        self.login_email = value
+
+    def set_login_password(self, value: str):
+        self.login_password = value
+
+    def set_signup_email(self, value: str):
+        self.signup_email = value
+
+    def set_signup_password(self, value: str):
+        self.signup_password = value
+
+    def _map_firebase_to_dataset(self, is_new: bool = False):
+        """Create or find mapping between Firebase UID and dataset user_id"""
+        mapping_path = "backend/data/user_mapping.csv"
+
+        # Load or create mapping file
+        if os.path.exists(mapping_path):
+            mapping = pd.read_csv(mapping_path)
+        else:
+            mapping = pd.DataFrame(columns=["firebase_uid", "dataset_user_id"])
+
+        # Check if this Firebase user already has a dataset ID
+        existing = mapping[mapping["firebase_uid"] == self.firebase_uid]
+
+        if not existing.empty:
+            # Returning user
+            self.user_id = str(existing.iloc[0]["dataset_user_id"])
+            self.user_type = "old"
+        else:
+            # New user - assign next available integer ID
+            if len(mapping) == 0:
+                new_id = 1
+            else:
+                new_id = int(mapping["dataset_user_id"].max()) + 1
+
+            # Add new mapping
+            new_row = pd.DataFrame([{
+                "firebase_uid": self.firebase_uid,
+                "dataset_user_id": new_id
+            }])
+            mapping = pd.concat([mapping, new_row], ignore_index=True)
+            mapping.to_csv(mapping_path, index=False)
+
+            self.user_id = str(new_id)
+            self.user_type = "new" if is_new else "old"
+
+    def login(self):
+        if not self.login_email or not self.login_password:
+            self.error_message = "Please enter email and password"
+            return
+
+        try:
+            api_key = "YOUR_FIREBASE_WEB_API_KEY_HERE"   # ← Change this
+
+            payload = {
+                "email": self.login_email,
+                "password": self.login_password,
+                "returnSecureToken": True
+            }
+
+            response = requests.post(
+                f"https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key={api_key}",
+                json=payload
+            )
+            data = response.json()
+
+            if "error" in data:
+                self.error_message = data["error"]["message"].replace("_", " ")
+                return
+
+            self.firebase_uid = data["localId"]
+            self.email = self.login_email
+            self.logged_in = True
+            self.error_message = ""
+
+            self._map_firebase_to_dataset(is_new=False)
+            return rx.redirect("/")
+
+        except Exception as e:
+            self.error_message = f"Login failed: {str(e)}"
+
+    def signup(self):
+        if not self.signup_email or not self.signup_password:
+            self.error_message = "Please fill all fields"
+            return
+
+        try:
+            api_key = "YOUR_FIREBASE_WEB_API_KEY_HERE"
+
+            payload = {
+                "email": self.signup_email,
+                "password": self.signup_password,
+                "returnSecureToken": True
+            }
+
+            response = requests.post(
+                f"https://identitytoolkit.googleapis.com/v1/accounts:signUp?key={api_key}",
+                json=payload
+            )
+            data = response.json()
+
+            if "error" in data:
+                self.error_message = data["error"]["message"].replace("_", " ")
+                return
+
+            self.firebase_uid = data["localId"]
+            self.email = self.signup_email
+            self.logged_in = True
+            self.error_message = ""
+
+            self._map_firebase_to_dataset(is_new=True)
+            return rx.redirect("/")
+
+        except Exception as e:
+            self.error_message = f"Signup failed: {str(e)}"
+
+    def logout(self):
+        self.firebase_uid = ""
+        self.user_id = ""
+        self.email = ""
+        self.logged_in = False
+        self.user_type = "new"
+        self.error_message = ""
+        return rx.redirect("/login")
