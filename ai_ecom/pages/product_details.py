@@ -1,110 +1,140 @@
 import reflex as rx
-from state.cart_state import CartState
+from ..components.navbar import navbar
+from ..components.footer import footer
+from ..components.product_card import recommendation_card
+from ..state.products_state import ProductDetailState, ProductsState
+from ..state.cart_state import CartState
 
+from ..components.layout import layout
 
-class ProductDetailState(rx.State):
-    """State for single product detail page"""
-    product: dict = {}
-    current_product_id: str = ""
-
-    def load_product(self, product_id: str):
-        """Load product data from CSV when the page loads"""
-        self.current_product_id = product_id
-        try:
-            import pandas as pd
-            df = pd.read_csv("backend/data/clean_data.csv")
-            
-            result = df[df['product_id'].astype(str) == str(product_id)]
-            if not result.empty:
-                self.product = result.iloc[0].to_dict()
-            else:
-                self.product = {}
-        except Exception as e:
-            print(f"Error loading product {product_id}: {e}")
-            self.product = {}
-
-
-@rx.page(
-    route="/product/[product_id]",
-    title="Product Detail",
-    on_load=ProductDetailState.load_product
-)
-def product_detail_page(product_id: str):   # ← THIS LINE IS REQUIRED
-    return rx.center(
+def product_detail_page() -> rx.Component:
+    product = ProductDetailState.product
+    
+    return layout(
         rx.vstack(
-            # Back button
-            rx.button(
-                "← Back to Products",
-                on_click=rx.redirect("/products"),
-                variant="ghost",
-                align_self="flex-start",
-                margin_bottom="1em",
-                size="3",
+            # Breadcrumbs
+            rx.hstack(
+                rx.link("Home", href="/", color="gray.500", size="2"),
+                rx.icon("chevron_right", size=14, color="gray.400"),
+                rx.link("Products", href="/products", color="gray.500", size="2"),
+                rx.icon("chevron_right", size=14, color="gray.400"),
+                rx.text(product["product_name"], color="gray.900", size="2", font_weight="medium"),
+                spacing="2",
+                align="center",
+                width="100%",
+                padding_y="6",
             ),
-
-            rx.cond(
-                ProductDetailState.product,
-                # Product found
-                rx.hstack(
-                    # Image
+            
+            # Product Info Section
+            rx.hstack(
+                # Left: Image
+                rx.box(
                     rx.image(
-                        src=ProductDetailState.product.get("image_url", "/assets/placeholder.jpg"),
-                        width="480px",
+                        src=product["image_url"],
+                        width="100%",
                         height="auto",
-                        border_radius="15px",
-                        object_fit="contain",
+                        border_radius="2xl",
+                        box_shadow="lg",
                     ),
-                    # Details
-                    rx.vstack(
-                        rx.heading(
-                            ProductDetailState.product.get("product_name", "Product"),
-                            size="8",
-                        ),
-                        rx.text(
-                            f"₹{float(ProductDetailState.product.get('price', 0)):.2f}",
-                            font_size="3em",
-                            font_weight="bold",
-                            color="green.600",
-                        ),
-                        rx.text(
-                            ProductDetailState.product.get("description", "No description available."),
-                            font_size="lg",
-                            color="gray.700",
-                        ),
-                        rx.hstack(
-                            rx.button(
-                                "Add to Cart",
-                                on_click=CartState.add_to_cart(ProductDetailState.product),
-                                color_scheme="blue",
-                                size="4",
-                            ),
-                            rx.button(
-                                "Buy Now",
-                                on_click=rx.redirect("/checkout"),
-                                color_scheme="green",
-                                size="4",
-                            ),
-                            spacing="4",
-                        ),
-                        spacing="6",
-                        align="stretch",
-                    ),
-                    spacing="10",
-                    width="100%",
-                    max_width="1100px",
+                    width="50%",
                 ),
-                # Product not found
+                
+                # Right: Details
                 rx.vstack(
-                    rx.heading("Product Not Found", size="7", color="red.500"),
-                    rx.button(
-                        "Browse All Products", 
-                        on_click=rx.redirect("/products"), 
-                        size="4"
+                    rx.badge(product["category"], color_scheme="blue", variant="soft", size="2"),
+                    rx.heading(product["product_name"], size="9", color="#111827"),
+                    
+                    rx.hstack(
+                        rx.hstack(
+                            rx.icon("star", size=18, color="amber"),
+                            rx.text(product["rating"].to_string(), font_weight="bold", size="4"),
+                            spacing="1",
+                            align="center",
+                        ),
+                        rx.text(f"({product['rating_count'].to_string()} reviews)", color="gray.500", size="3"),
+                        spacing="4",
+                        align="center",
                     ),
-                )
+                    
+                    rx.text(
+                        f"₹{product['price']}",
+                        size="8",
+                        font_weight="bold",
+                        color="#3b82f6",
+                        padding_y="4",
+                    ),
+                    
+                    rx.text(
+                        product["description"],
+                        color="gray.600",
+                        size="3",
+                        line_height="1.6",
+                    ),
+                    
+                    rx.divider(padding_y="4"),
+                    
+                    # Actions
+                    rx.hstack(
+                        rx.button(
+                            "Add to Cart",
+                            on_click=CartState.add_to_cart(product),
+                            size="4",
+                            color_scheme="blue",
+                            flex="1",
+                        ),
+                        rx.button(
+                            "Buy Now",
+                            on_click=rx.redirect("/checkout"),
+                            size="4",
+                            variant="outline",
+                            color_scheme="blue",
+                            flex="1",
+                        ),
+                        width="100%",
+                        spacing="4",
+                        padding_top="6",
+                    ),
+                    
+                    # Features
+                    rx.grid(
+                        rx.hstack(rx.icon("truck", size=18), rx.text("Free Delivery", size="2"), spacing="2"),
+                        rx.hstack(rx.icon("rotate_ccw", size=18), rx.text("30 Days Return", size="2"), spacing="2"),
+                        rx.hstack(rx.icon("shield_check", size=18), rx.text("Secure Payment", size="2"), spacing="2"),
+                        rx.hstack(rx.icon("tag", size=18), rx.text("Best Price", size="2"), spacing="2"),
+                        columns="2",
+                        spacing="4",
+                        width="100%",
+                        padding_top="8",
+                    ),
+                    
+                    align="start",
+                    spacing="4",
+                    width="50%",
+                    padding_left="12",
+                ),
+                width="100%",
+                align="start",
+                padding_y="8",
             ),
-            spacing="8",
-            padding="2em",
+            
+            # Similar Products Section
+            rx.vstack(
+                rx.heading("You may also like", size="7", color="#111827", margin_top="20", margin_bottom="8"),
+                rx.grid(
+                    rx.foreach(
+                        ProductsState.all_products[:4], # Dummy similar products
+                        recommendation_card
+                    ),
+                    columns="4",
+                    spacing="6",
+                    width="100%",
+                ),
+                width="100%",
+                padding_bottom="20",
+            ),
+            
+            max_width="1280px",
             width="100%",
+            padding_x="8",
         )
     )

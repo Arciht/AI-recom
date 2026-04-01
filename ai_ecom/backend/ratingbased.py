@@ -34,12 +34,15 @@ def rating_based_recommend(data: pd.DataFrame, top_n: int = 10) -> pd.DataFrame:
         'product_id',
         'product_name',
         'price',
-        'rating',           # We keep original column name for consistency
+        'avg_rating',
         'rating_count',
         'image_url',
         'tags',
         'category'
     ]].copy()
+
+    # Rename back to rating for frontend consistency
+    final_recommendations = final_recommendations.rename(columns={'avg_rating': 'rating'})
 
     # Round rating to 1 decimal place
     final_recommendations['rating'] = final_recommendations['rating'].round(1)

@@ -1,110 +1,81 @@
 import reflex as rx
-from components.recommendation_card import recommendation_card
-from state.user_state import UserState
-from state.recommendation_state import RecommendationState
-from state.cart_state import CartState
+from ..components.navbar import navbar
+from ..components.footer import footer
+from ..components.product_card import recommendation_card
+from ..state.recommendation_state import RecommendationState
 
+from ..components.layout import layout
 
-@rx.page(
-    route="/recommendations",
-    title="AI Recommendations",
-    on_load=RecommendationState.load_recommendations
-)
-def recommendations_page():
-    return rx.vstack(
-        # Header Section
+def recommendations_page() -> rx.Component:
+    return layout(
         rx.vstack(
-            rx.heading(
-                rx.cond(
-                    UserState.user_type == "new",
-                    "Popular Picks For New Users",
-                    "Personalized Recommendations For You"
-                ),
-                size="9",
-                text_align="center",
-            ),
-            rx.text(
-                rx.cond(
-                    UserState.user_type == "new",
-                    "Based on highest customer ratings across all users",
-                    "Based on your past behavior & what similar users liked"
-                ),
-                font_size="lg",
-                color="gray.600",
-                text_align="center",
-                max_width="600px",
-            ),
-            spacing="2",
-            align="center",
-        ),
-
-        # Refresh Button
-        rx.button(
-            rx.hstack(
-                rx.icon("refresh-cw"),
-                rx.text("Refresh Recommendations"),
-                spacing="2",
-            ),
-            on_click=RecommendationState.load_recommendations,
-            color_scheme="green",
-            size="4",
-            variant="solid",
-        ),
-
-        # Recommendations Grid
-        rx.grid(
-            rx.foreach(
-                RecommendationState.recommendations,
-                recommendation_card
-            ),
-            columns=["1", "2", "3", "4"],   # Responsive grid
-            spacing="6",
-            width="100%",
-            padding_y="2em",
-        ),
-
-        # Empty State (if no recommendations)
-        rx.cond(
-            len(RecommendationState.recommendations) == 0,
+            # Header Section
             rx.vstack(
-                rx.icon("alert-circle", size=60, color="gray.400"),
-                rx.heading("No recommendations yet", size="6"),
-                rx.text(
-                    "Please login or try refreshing",
-                    color="gray.500"
-                ),
+                rx.heading("Personalized Recommendations", size="9", color="#111827"),
+                rx.text("AI-powered suggestions based on your unique preferences and history.", color="gray.600", size="4"),
                 rx.button(
-                    "Go to All Products",
-                    on_click=rx.redirect("/products"),
+                    "Refresh Recommendations",
+                    on_click=RecommendationState.refresh_recommendations,
                     color_scheme="blue",
+                    variant="soft",
+                    size="3",
+                    margin_top="6",
                 ),
-                spacing="4",
-                padding="6em",
                 align="center",
-            )
-        ),
-
-        # Quick Links
-        rx.hstack(
-            rx.button(
-                "Browse All Products",
-                on_click=rx.redirect("/products"),
-                variant="outline",
-                size="4",
+                spacing="4",
+                padding_y="16",
+                width="100%",
             ),
-            rx.button(
-                "View Cart",
-                on_click=rx.redirect("/cart"),
-                color_scheme="blue",
-                size="4",
+            
+            # Content Section
+            rx.tabs.root(
+                rx.tabs.list(
+                    rx.tabs.trigger("Based on Your History", value="history", size="3"),
+                    rx.tabs.trigger("Similar Users Also Liked", value="collaborative", size="3"),
+                    justify_content="center",
+                    width="100%",
+                    padding_bottom="8",
+                ),
+                rx.tabs.content(
+                    rx.cond(
+                        RecommendationState.is_loading,
+                        rx.center(rx.spinner(size="3", color="#3b82f6"), width="100%", height="400px"),
+                        rx.grid(
+                            rx.foreach(
+                                RecommendationState.content_based_recs,
+                                recommendation_card
+                            ),
+                            columns="4",
+                            spacing="6",
+                            width="100%",
+                            padding_bottom="20",
+                        ),
+                    ),
+                    value="history",
+                ),
+                rx.tabs.content(
+                    rx.cond(
+                        RecommendationState.is_loading,
+                        rx.center(rx.spinner(size="3", color="#3b82f6"), width="100%", height="400px"),
+                        rx.grid(
+                            rx.foreach(
+                                RecommendationState.collaborative_recs,
+                                recommendation_card
+                            ),
+                            columns="4",
+                            spacing="6",
+                            width="100%",
+                            padding_bottom="20",
+                        ),
+                    ),
+                    value="collaborative",
+                ),
+                default_value="history",
+                width="100%",
             ),
-            spacing="4",
-        ),
-
-        spacing="10",
-        padding="2em",
-        align="center",
-        width="100%",
-        min_height="100vh",
-        background_color=rx.color("gray", 50),
+            
+            max_width="1280px",
+            width="100%",
+            padding_x="8",
+        )
     )

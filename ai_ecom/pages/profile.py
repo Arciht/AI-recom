@@ -1,134 +1,146 @@
 import reflex as rx
-from state.user_state import UserState
-from state.cart_state import CartState
+from ..components.navbar import navbar
+from ..components.footer import footer
+from ..state.user_state import UserState
+from ..state.cart_state import WishlistState
 
+from ..components.layout import layout
 
-@rx.page(route="/profile", title="My Profile")
-def profile_page():
-    return rx.vstack(
-        rx.heading("My Profile", size="9", text_align="center"),
-
-        # Main Content
-        rx.cond(
-            UserState.logged_in,
-            # Logged-in User View
-            rx.vstack(
-                # User Info Card
-                rx.card(
-                    rx.vstack(
-                        rx.icon("user", size=80, color="blue.500"),
-                        rx.heading(UserState.email, size="6"),
-                        rx.text(f"User ID: {UserState.user_id}", color="gray.500"),
-                        rx.badge(
-                            rx.cond(
-                                UserState.user_type == "new",
-                                "New User",
-                                "Existing User"
-                            ),
-                            color_scheme=rx.cond(
-                                UserState.user_type == "new", "orange", "green"
-                            ),
-                            size="lg",
-                        ),
-                        spacing="4",
-                        align="center",
-                        padding="2em",
-                    ),
-                    width="100%",
-                    max_width="500px",
-                ),
-
-                # Quick Stats
-                rx.hstack(
-                    rx.card(
-                        rx.vstack(
-                            rx.text("Orders", font_weight="bold"),
-                            rx.text("0", font_size="2xl", font_weight="bold"),  # TODO: connect later
-                            align="center",
-                        ),
-                        padding="1.5em",
-                        width="100%",
-                    ),
-                    rx.card(
-                        rx.vstack(
-                            rx.text("Wishlist", font_weight="bold"),
-                            rx.text("0", font_size="2xl", font_weight="bold"),
-                            align="center",
-                        ),
-                        padding="1.5em",
-                        width="100%",
-                    ),
-                    rx.card(
-                        rx.vstack(
-                            rx.text("Cart Items", font_weight="bold"),
-                            rx.text(len(CartState.cart_items), font_size="2xl", font_weight="bold"),
-                            align="center",
-                        ),
-                        padding="1.5em",
-                        width="100%",
-                    ),
-                    spacing="4",
-                    width="100%",
-                    max_width="600px",
-                ),
-
-                # Action Buttons
+def profile_page() -> rx.Component:
+    return layout(
+        rx.vstack(
+            rx.heading("My Profile", size="8", color="#111827", padding_y="8"),
+            
+            rx.hstack(
+                # Left Sidebar: Avatar and Info
                 rx.vstack(
-                    rx.button(
-                        "View My Orders",
+                    rx.card(
+                        rx.vstack(
+                            rx.avatar(
+                                fallback=UserState.user_name[:2].upper(),
+                                size="9",
+                                color_scheme="blue",
+                                margin_bottom="4",
+                            ),
+                            rx.heading(UserState.user_name, size="6", color="#111827"),
+                            rx.text(UserState.email, color="gray.500", size="2"),
+                            rx.badge(
+                                rx.cond(UserState.user_type == "new", "New User", "Returning User"),
+                                color_scheme=rx.cond(UserState.user_type == "new", "orange", "green"),
+                                variant="soft",
+                                margin_top="4",
+                            ),
+                            rx.button(
+                                "Logout",
+                                on_click=UserState.logout,
+                                color_scheme="red",
+                                variant="ghost",
+                                width="100%",
+                                margin_top="8",
+                            ),
+                            align="center",
+                            padding="8",
+                            width="100%",
+                        ),
                         width="100%",
-                        size="4",
-                        variant="outline",
-                        # on_click=... (we'll add later)
+                        border_radius="2xl",
                     ),
-                    rx.button(
-                        "Wishlist",
+                    width="300px",
+                    spacing="6",
+                ),
+                
+                # Right: Navigation Cards
+                rx.vstack(
+                    rx.grid(
+                        rx.link(
+                            rx.card(
+                                rx.hstack(
+                                    rx.box(
+                                        rx.icon("shopping_bag", size=32, color="#3b82f6"),
+                                        padding="4",
+                                        background_color="blue.50",
+                                        border_radius="xl",
+                                    ),
+                                    rx.vstack(
+                                        rx.heading("Order History", size="5", color="#111827"),
+                                        rx.text("View your past orders and status.", color="gray.500", size="2"),
+                                        align="start", spacing="1",
+                                    ),
+                                    rx.spacer(),
+                                    rx.icon("chevron_right", size=20, color="gray.400"),
+                                    width="100%", align="center", padding="4",
+                                ),
+                                _hover={"transform": "scale(1.02)", "box_shadow": "lg"},
+                                transition="all 0.2s",
+                                width="100%",
+                                border_radius="xl",
+                            ),
+                            href="/orders",
+                            width="100%",
+                            text_decoration="none",
+                        ),
+                        rx.link(
+                            rx.card(
+                                rx.hstack(
+                                    rx.box(
+                                        rx.icon("heart", size=32, color="red.500"),
+                                        padding="4",
+                                        background_color="red.50",
+                                        border_radius="xl",
+                                    ),
+                                    rx.vstack(
+                                        rx.heading("Wishlist", size="5", color="#111827"),
+                                        rx.text(f"You have {WishlistState.wishlist_items.length().to_string()} items saved.", color="gray.500", size="2"),
+                                        align="start", spacing="1",
+                                    ),
+                                    rx.spacer(),
+                                    rx.icon("chevron_right", size=20, color="gray.400"),
+                                    width="100%", align="center", padding="4",
+                                ),
+                                _hover={"transform": "scale(1.02)", "box_shadow": "lg"},
+                                transition="all 0.2s",
+                                width="100%",
+                                border_radius="xl",
+                            ),
+                            href="/wishlist",
+                            width="100%",
+                            text_decoration="none",
+                        ),
+                        rx.card(
+                            rx.hstack(
+                                rx.box(
+                                    rx.icon("settings", size=32, color="gray.600"),
+                                    padding="4",
+                                    background_color="gray.50",
+                                    border_radius="xl",
+                                ),
+                                rx.vstack(
+                                    rx.heading("Account Settings", size="5", color="#111827"),
+                                    rx.text("Update your email and password.", color="gray.500", size="2"),
+                                    align="start", spacing="1",
+                                ),
+                                rx.spacer(),
+                                rx.icon("chevron_right", size=20, color="gray.400"),
+                                width="100%", align="center", padding="4",
+                            ),
+                            _hover={"transform": "scale(1.02)", "box_shadow": "lg"},
+                            transition="all 0.2s",
+                            width="100%",
+                            border_radius="xl",
+                        ),
+                        columns="1",
+                        spacing="4",
                         width="100%",
-                        size="4",
-                        variant="outline",
                     ),
-                    rx.button(
-                        "View Cart",
-                        on_click=rx.redirect("/cart"),
-                        width="100%",
-                        size="4",
-                        color_scheme="blue",
-                    ),
-                    rx.button(
-                        "Logout",
-                        on_click=UserState.logout,
-                        color_scheme="red",
-                        width="100%",
-                        size="4",
-                    ),
-                    spacing="3",
                     width="100%",
-                    max_width="400px",
+                    padding_left="8",
+                    padding_bottom="20",
                 ),
-
-                spacing="8",
-                align="center",
-                padding_y="4em",
+                width="100%",
+                align="start",
             ),
-
-            # Not Logged In View
-            rx.vstack(
-                rx.heading("Please Login to view your profile", size="7"),
-                rx.text("You need to be logged in to access this page.", color="gray.600"),
-                rx.button(
-                    "Go to Login",
-                    on_click=rx.redirect("/login"),
-                    size="4",
-                    color_scheme="blue",
-                ),
-                spacing="6",
-                padding="6em",
-                align="center",
-            )
-        ),
-
-        width="100%",
-        align="center",
-        min_height="100vh",
-        background_color="gray.50",
+            max_width="1280px",
+            width="100%",
+            padding_x="8",
+        )
     )

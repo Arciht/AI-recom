@@ -3,6 +3,8 @@ from .Content_Based import content_based_recommend
 from .collaborative import collaborative_recommend
 from .ratingbased import rating_based_recommend
 
+import os
+
 def get_recommendations(user_id=None, user_type: str = "new", top_n: int = 10):
     """
     Main recommendation orchestrator.
@@ -14,17 +16,43 @@ def get_recommendations(user_id=None, user_type: str = "new", top_n: int = 10):
         top_n: Number of recommendations to return
     """
     try:
-        df = pd.read_csv("backend/data/clean_data.csv")
+        # Get the path to clean_data.csv relative to this file
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        data_path = os.path.join(current_dir, "clean_data.csv")
+        
+        df = pd.read_csv(data_path)
+        
+        # Normalize column names for internal logic
+        df = df.rename(columns={
+            "User's ID": "user_id",
+            "ProdID": "product_id",
+            "Name": "product_name",
+            "ImageURL": "image_url",
+            "Rating": "rating",
+            "Review Count": "rating_count",
+            "Category": "category",
+            "Description": "description",
+            "Tags": "tags"
+        })
+        
+        # Add dummy price if missing
+        if "price" not in df.columns:
+            df["price"] = df["product_id"].apply(lambda x: round((hash(str(x)) % 10000) / 100 + 499, 2))
+            
         print(f"✅ Loaded dataset with {len(df)} products")
     except FileNotFoundError:
-        print("❌ Error: clean_data.csv not found. Please run cleaning_data.py first.")
+        print(f"❌ Error: clean_data.csv not found at {data_path}")
         return []
 
     # === New User → Rating Based (Popular Products) ===
     if user_type == "new" or user_id is None:
         print(f"🆕 New User detected → Returning Top Rated Products")
         recommendations = rating_based_recommend(df, top_n)
-        # Convert DataFrame to list of dicts for Reflex frontend
+        # Ensure columns exist even in output
+        if not recommendations.empty:
+            # Map columns if they were lost/renamed in the sub-functions
+            # Most sub-functions return from the original 'df' or a slice
+            pass 
         return recommendations.to_dict(orient="records")
 
     # === Existing User → Hybrid Approach ===
@@ -82,7 +110,9 @@ def test_recommender():
 
     # Test for Existing User (using first user_id from dataset)
     try:
-        df = pd.read_csv("backend/data/clean_data.csv")
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        data_path = os.path.join(current_dir, "clean_data.csv")
+        df = pd.read_csv(data_path)
         sample_user = str(df['user_id'].iloc[0])
         
         print(f"=== Testing Existing User (ID: {sample_user}) ===")

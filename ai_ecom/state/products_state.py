@@ -1,7 +1,6 @@
 import reflex as rx
-from state.cart_state import CartState
-from state.user_state import UserState
 import pandas as pd
+import os
 
 class ProductsState(rx.State):
     search_query: str = ""
@@ -21,10 +20,38 @@ class ProductsState(rx.State):
                    q in str(p.get("category", "")).lower()
             ]
 
-    def load_all_products(self):
+    async def load_all_products(self):
         try:
-            df = pd.read_csv("backend/data/clean_data.csv")
-            self.all_products = df.to_dict(orient="records")
+            # This is a placeholder for a real API call
+            # In a real app, you would fetch this from your backend
+            # For example: response = await rx.call_api("/api/products")
+            
+            # Get path relative to this file
+            current_dir = os.path.dirname(os.path.abspath(__file__))
+            data_path = os.path.join(current_dir, "..", "backend", "clean_data.csv")
+            
+            df = pd.read_csv(data_path)
+            
+            # Map columns to match our UI expectations
+            df = df.rename(columns={
+                "ProdID": "product_id",
+                "Name": "product_name",
+                "ImageURL": "image_url",
+                "Rating": "rating",
+                "Review Count": "rating_count",
+                "Category": "category",
+                "Description": "description",
+                "Tags": "tags"
+            })
+            
+            # Clean up image URLs (some have multiple URLs separated by |)
+            df["image_url"] = df["image_url"].apply(lambda x: str(x).split(" | ")[0] if pd.notnull(x) else "https://via.placeholder.com/400")
+            
+            # Add dummy prices if missing
+            if "price" not in df.columns:
+                df["price"] = df["product_id"].apply(lambda x: round((hash(str(x)) % 10000) / 100 + 499, 2))
+                
+            self.all_products = df.head(100).to_dict(orient="records")
             self.filtered_products = self.all_products.copy()
         except Exception as e:
             print(f"Error loading products: {e}")
@@ -35,86 +62,41 @@ class ProductsState(rx.State):
 class ProductDetailState(rx.State):
     """State for product detail page"""
     product: dict = {}
-    pid: str = ""          # Changed from 'product_id' to 'pid' to avoid conflict
 
-    def load_product(self, product_id: str):
+    async def load_product(self):
         """Load product details"""
-        self.pid = product_id
+        # Get product_id from the route parameters
+        product_id = self.router.page.params.get("product_id", "")
         try:
-            import pandas as pd
-            df = pd.read_csv("backend/data/clean_data.csv")
+            # Get path relative to this file
+            current_dir = os.path.dirname(os.path.abspath(__file__))
+            data_path = os.path.join(current_dir, "..", "backend", "clean_data.csv")
+            
+            df = pd.read_csv(data_path)
+            
+            # Map columns
+            df = df.rename(columns={
+                "ProdID": "product_id",
+                "Name": "product_name",
+                "ImageURL": "image_url",
+                "Rating": "rating",
+                "Review Count": "rating_count",
+                "Category": "category",
+                "Description": "description",
+                "Tags": "tags"
+            })
             
             result = df[df['product_id'].astype(str) == str(product_id)]
-            
             if not result.empty:
-                self.product = result.iloc[0].to_dict()
+                product = result.iloc[0].to_dict()
+                # Clean up image URL
+                if "image_url" in product:
+                    product["image_url"] = str(product["image_url"]).split(" | ")[0]
+                # Add dummy price
+                product["price"] = round((hash(str(product["product_id"])) % 10000) / 100 + 499, 2)
+                self.product = product
             else:
                 self.product = {}
         except Exception as e:
             print(f"Error loading product: {e}")
             self.product = {}
-
-
-# @rx.page(route="/product/[product_id]", title="Product Detail")
-def product_detail_page(product_id: str):
-    # Load product when page opens
-    ProductDetailState.load_product(product_id)
-
-    return rx.center(
-        rx.vstack(
-            rx.button(
-                "← Back to Products",
-                on_click=rx.redirect("/products"),
-                variant="ghost",
-                align_self="flex-start",
-            ),
-
-            rx.cond(
-                ProductDetailState.product,
-                # Product Found
-                rx.hstack(
-                    rx.image(
-                        src=ProductDetailState.product.get("image_url", "/assets/placeholder.jpg"),
-                        width="500px",
-                        height="auto",
-                        border_radius="15px",
-                    ),
-                    rx.vstack(
-                        rx.heading(ProductDetailState.product.get("product_name", ""), size="8"),
-                        rx.text(
-                            f"₹{float(ProductDetailState.product.get('price', 0)):.2f}",
-                            font_size="3em",
-                            font_weight="bold",
-                            color="green.600",
-                        ),
-                        rx.text(
-                            ProductDetailState.product.get("description", "No description available."),
-                            font_size="lg",
-                        ),
-                        rx.hstack(
-                            rx.button(
-                                "Add to Cart",
-                                on_click=lambda: CartState.add_to_cart(ProductDetailState.product),
-                                color_scheme="blue",
-                                size="lg",
-                            ),
-                            rx.button(
-                                "Buy Now",
-                                on_click=rx.redirect("/checkout"),
-                                color_scheme="green",
-                                size="lg",
-                            ),
-                            spacing="4",
-                        ),
-                        spacing="6",
-                        align="stretch",
-                    ),
-                    spacing="10",
-                ),
-                # Product Not Found
-                rx.text("Product not found", size="7", color="red.500"),
-            ),
-            spacing="8",
-            padding="2em",
-        )
-    )

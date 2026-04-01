@@ -1,217 +1,142 @@
 import reflex as rx
-from state.user_state import UserState
-from state.cart_state import CartState
-
+from ..components.navbar import navbar
+from ..components.footer import footer
+from ..state.cart_state import CartState
 
 class CheckoutState(rx.State):
-    """State for Checkout Page"""
+    full_name: str = ""
     address: str = ""
+    city: str = ""
+    pin_code: str = ""
     phone: str = ""
-    name: str = ""
-    payment_status: str = ""   # "success", "failed", ""
-    is_processing: bool = False
+    email: str = ""
+    
+    def set_full_name(self, value): self.full_name = value
+    def set_address(self, value): self.address = value
+    def set_city(self, value): self.city = value
+    def set_pin_code(self, value): self.pin_code = value
+    def set_phone(self, value): self.phone = value
+    def set_email(self, value): self.email = value
+    
+    def proceed_to_payment(self):
+        if not all([self.full_name, self.address, self.city, self.pin_code, self.phone, self.email]):
+            return rx.toast("Please fill all fields", color_scheme="red")
+        return rx.redirect("/payment")
 
-    def set_name(self, value: str):
-        self.name = value
+from ..components.layout import layout
 
-    def set_address(self, value: str):
-        self.address = value
-
-    def set_phone(self, value: str):
-        self.phone = value
-
-    def process_payment(self):
-        """Dummy Razorpay Payment Simulation"""
-        if not self.name or not self.address or not self.phone:
-            self.payment_status = "Please fill all delivery details"
-            return
-
-        if len(CartState.cart_items) == 0:
-            self.payment_status = "Your cart is empty"
-            return
-
-        self.is_processing = True
-        self.payment_status = ""
-
-        # Simulate payment processing delay (like real Razorpay)
-        def simulate_razorpay():
-            import time
-            time.sleep(1.5)  # Simulate network delay
-            self.is_processing = False
-            self.payment_status = "success"
-            # Clear cart after successful payment
-            CartState.cart_items = []
-            CartState.total = 0.0
-
-        # In real app, you would call Razorpay API here
-        rx.call_script("setTimeout(() => { window.location.reload() }, 1800)")  # Simple refresh simulation
-        simulate_razorpay()  # This won't actually work in Reflex due to threading, so we'll use a better approach below
-
-
-    def complete_dummy_payment(self):
-        """Better dummy Razorpay flow"""
-        if not self.name or not self.address or not self.phone:
-            self.payment_status = "Please fill all the delivery details"
-            return
-
-        if len(CartState.cart_items) == 0:
-            self.payment_status = "Cart is empty!"
-            return
-
-        self.is_processing = True
-
-        # Simulate Razorpay success after 1.5 seconds
-        self.payment_status = "Processing payment with Razorpay..."
-
-        # Use rx.set_value + delay simulation
-        rx.call_script("""
-            setTimeout(() => {
-                window.location.href = '/success';
-            }, 1800);
-        """)
-
-
-@rx.page(route="/checkout", title="Checkout")
-def checkout_page():
-    return rx.vstack(
-        rx.heading("Checkout", size="9", text_align="center"),
-
-        rx.cond(
-            UserState.logged_in,
-            # Main Checkout Form
+def checkout_page() -> rx.Component:
+    return layout(
+        rx.vstack(
+            rx.heading("Checkout", size="8", color="#111827", padding_y="8"),
+            
             rx.hstack(
-                # Left: Delivery Details
-                rx.card(
-                    rx.vstack(
-                        rx.heading("Delivery Details", size="6"),
-                        rx.input(
-                            placeholder="Full Name",
-                            value=CheckoutState.name,
-                            on_change=CheckoutState.set_name,
-                            size="3",
-                        ),
-                        rx.input(
-                            placeholder="Phone Number",
-                            type="tel",
-                            value=CheckoutState.phone,
-                            on_change=CheckoutState.set_phone,
-                            size="3",
-                        ),
-                        rx.textarea(
-                            placeholder="Full Address (House no, Street, City, Pincode)",
-                            value=CheckoutState.address,
-                            on_change=CheckoutState.set_address,
-                            height="120px",
-                            size="3",
-                        ),
-                        spacing="4",
-                        width="100%",
-                    ),
-                    padding="2em",
-                    width="100%",
-                    max_width="500px",
-                ),
-
-                # Right: Order Summary + Payment
+                # Left: Shipping Form
                 rx.vstack(
                     rx.card(
                         rx.vstack(
-                            rx.heading("Order Summary", size="6"),
-                            
-                            # Cart Items Summary
-                            rx.foreach(
-                                CartState.cart_items,
-                                lambda item: rx.hstack(
-                                    rx.text(item.get("product_name", "")),
-                                    rx.spacer(),
-                                    rx.text(f"₹{float(item.get('price', 0)) * item.get('quantity', 1):.2f}"),
-                                    width="100%",
-                                )
-                            ),
-                            
-                            rx.divider(),
-                            
-                            # Total
-                            rx.hstack(
-                                rx.text("Total Amount", font_weight="bold", font_size="lg"),
-                                rx.spacer(),
-                                rx.text(
-                                    f"₹{CartState.total:.2f}",
-                                    font_size="2xl",
-                                    font_weight="bold",
-                                    color="green.600"
+                            rx.heading("Shipping Information", size="5", margin_bottom="4"),
+                            rx.grid(
+                                rx.vstack(
+                                    rx.text("Full Name", size="2", font_weight="medium"),
+                                    rx.input(placeholder="John Doe", on_change=CheckoutState.set_full_name, size="3", width="100%"),
+                                    align="start", spacing="1", width="100%",
                                 ),
+                                rx.vstack(
+                                    rx.text("Email Address", size="2", font_weight="medium"),
+                                    rx.input(placeholder="john@example.com", on_change=CheckoutState.set_email, size="3", width="100%"),
+                                    align="start", spacing="1", width="100%",
+                                ),
+                                rx.box(
+                                    rx.vstack(
+                                        rx.text("Address", size="2", font_weight="medium"),
+                                        rx.text_area(placeholder="House No, Street Name", on_change=CheckoutState.set_address, size="3", width="100%"),
+                                        align="start", spacing="1", width="100%",
+                                    ),
+                                    grid_column="span 2",
+                                ),
+                                rx.vstack(
+                                    rx.text("City", size="2", font_weight="medium"),
+                                    rx.input(placeholder="New York", on_change=CheckoutState.set_city, size="3", width="100%"),
+                                    align="start", spacing="1", width="100%",
+                                ),
+                                rx.vstack(
+                                    rx.text("Pin Code", size="2", font_weight="medium"),
+                                    rx.input(placeholder="10001", on_change=CheckoutState.set_pin_code, size="3", width="100%"),
+                                    align="start", spacing="1", width="100%",
+                                ),
+                                rx.vstack(
+                                    rx.text("Phone Number", size="2", font_weight="medium"),
+                                    rx.input(placeholder="+1 234 567 890", on_change=CheckoutState.set_phone, size="3", width="100%"),
+                                    align="start", spacing="1", width="100%",
+                                ),
+                                columns="2",
+                                spacing="4",
                                 width="100%",
                             ),
-                            
                             spacing="4",
                             width="100%",
+                            padding="6",
                         ),
-                        padding="2em",
                         width="100%",
-                        max_width="450px",
+                        border_radius="2xl",
                     ),
-
-                    # Razorpay Payment Button
-                    rx.button(
-                        rx.cond(
-                            CheckoutState.is_processing,
-                            rx.hstack(
-                                rx.spinner(),
-                                rx.text("Processing Payment with Razorpay..."),
-                                spacing="3",
-                            ),
-                            rx.hstack(
-                                rx.icon("credit-card"),
-                                rx.text("Pay with Razorpay"),
-                                spacing="3",
-                            )
-                        ),
-                        on_click=CheckoutState.complete_dummy_payment,
-                        width="100%",
-                        size="4",
-                        color_scheme="green",
-                        height="60px",
-                        font_size="lg",
-                        is_disabled=CheckoutState.is_processing,
-                    ),
-
-                    # Payment Status
-                    rx.cond(
-                        CheckoutState.payment_status != "",
-                        rx.text(
-                            CheckoutState.payment_status,
-                            color=rx.cond(
-                                CheckoutState.payment_status.contains("success"), "green", "red"
-                            ),
-                            text_align="center",
-                        )
-                    ),
-
-                    spacing="6",
-                    width="100%",
-                    max_width="450px",
+                    width="65%",
                 ),
-                spacing="8",
-                align="start",
+                
+                # Right: Summary
+                rx.vstack(
+                    rx.card(
+                        rx.vstack(
+                            rx.heading("Order Summary", size="5", margin_bottom="4"),
+                            rx.vstack(
+                                rx.foreach(
+                                    CartState.cart_items,
+                                    lambda item: rx.hstack(
+                                        rx.text(item["product_name"], size="2", color="gray.600", text_overflow="ellipsis", white_space="nowrap", overflow="hidden", width="150px"),
+                                        rx.spacer(),
+                                        rx.text(f"x{item['quantity']}", size="2", color="gray.400"),
+                                        rx.spacer(),
+                                        rx.text(f"₹{item['price']}", size="2", font_weight="medium"),
+                                        width="100%",
+                                    )
+                                ),
+                                spacing="2",
+                                width="100%",
+                                max_height="200px",
+                                overflow_y="auto",
+                            ),
+                            rx.divider(margin_y="4"),
+                            rx.hstack(
+                                rx.text("Total Amount", font_weight="bold"),
+                                rx.spacer(),
+                                rx.text(f"₹{CartState.total}", font_weight="bold", color="#3b82f6", size="5"),
+                                width="100%",
+                            ),
+                            rx.button(
+                                "Place Order",
+                                on_click=CheckoutState.proceed_to_payment,
+                                color_scheme="blue",
+                                width="100%",
+                                size="4",
+                                margin_top="6",
+                            ),
+                            spacing="3",
+                            width="100%",
+                            padding="6",
+                        ),
+                        width="100%",
+                        border_radius="2xl",
+                    ),
+                    width="35%",
+                    padding_left="8",
+                ),
                 width="100%",
-                padding="2em",
+                align="start",
+                padding_bottom="20",
             ),
-
-            # Not Logged In
-            rx.vstack(
-                rx.heading("Please Login to Checkout", size="7"),
-                rx.button(
-                    "Go to Login",
-                    on_click=rx.redirect("/login"),
-                    size="4",
-                ),
-                padding="6em",
-            )
-        ),
-
-        width="100%",
-        max_width="1200px",
-        padding_y="2em",
-        align="center",
+            max_width="1280px",
+            width="100%",
+            padding_x="8",
+        )
     )

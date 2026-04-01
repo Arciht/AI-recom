@@ -1,103 +1,254 @@
 import reflex as rx
-from typing import Dict, Any
+from ..state.cart_state import CartState, WishlistState
 
-# Import CartState so we can add items to cart
-from state.cart_state import CartState
-
-
-def product_card(product: Dict[str, Any]) -> rx.Component:
-    """
-    Reusable Product Card Component
-    Works for both Recommendations and All Products page
-    """
+def product_card(product: dict):
     return rx.card(
         rx.vstack(
             # Product Image
-            rx.image(
-                src=product.get("image_url", "/assets/placeholder.jpg"),
-                alt=product.get("product_name", "Product"),
+            rx.box(
+                rx.image(
+                    src=product["image_url"],
+                    width="100%",
+                    height="200px",
+                    object_fit="cover",
+                    border_radius="lg",
+                ),
+                rx.icon(
+                    "heart",
+                    size=20,
+                    position="absolute",
+                    top="3",
+                    right="3",
+                    cursor="pointer",
+                    color=rx.cond(
+                        WishlistState.wishlist_items.contains(product),
+                        "red",
+                        "gray"
+                    ),
+                    on_click=lambda: WishlistState.toggle_wishlist(product),
+                ),
+                position="relative",
                 width="100%",
-                height="220px",
-                object_fit="cover",
-                border_radius="8px 8px 0 0",
             ),
             
             # Product Details
             rx.vstack(
                 rx.heading(
-                    product.get("product_name", "Unknown Product"),
+                    product["product_name"],
                     size="5",
-                    text_align="center",
-                    no_of_lines=2,
+                    text_overflow="ellipsis",
+                    white_space="nowrap",
+                    overflow="hidden",
+                    width="100%",
+                    color="#1e293b", # Slate-800
                 ),
-                
-                # Price
-                rx.text(
-                    f"₹{float(product.get('price', 0)):.2f}",
-                    font_size="1.8em",
-                    font_weight="bold",
-                    color="green.600",
-                ),
-                
-                # Rating (if available in dataset)
                 rx.hstack(
-                    rx.icon("star", color="gold"),
-                    rx.text(
-                        f"{product.get('rating', 4.5)} • "
-                        f"{product.get('rating_count', 120)} ratings",
-                        font_size="0.9em",
-                        color="gray.500",
+                    rx.text(f"₹{product['price']}", font_weight="bold", color="#2563eb", size="4"),
+                    rx.spacer(),
+                    rx.hstack(
+                        rx.icon("star", size=14, color="#f59e0b"), # Amber-500
+                        rx.text(product["rating"].to_string(), size="2", color="#64748b"), # Slate-500
+                        spacing="1",
+                        align="center",
                     ),
-                    spacing="1",
-                ),
-                
-                # Short Description / Tags (optional)
-                rx.text(
-                    product.get("tags", "")[:80] + "..." 
-                    if len(product.get("tags", "")) > 80 else product.get("tags", ""),
-                    font_size="0.85em",
-                    color="gray.600",
-                    text_align="center",
-                    no_of_lines=2,
-                ),
-                
-                # Action Buttons
-                rx.hstack(
-                    rx.button(
-                        "Add to Cart",
-                        on_click=lambda: CartState.add_to_cart(product),
-                        color_scheme="blue",
-                        variant="solid",
-                        size="2",
-                        flex="1",
-                    ),
-                    rx.button(
-                        "View Details",
-                        on_click=rx.redirect(f"/product/{product.get('product_id')}"),
-                        color_scheme="gray",
-                        variant="outline",
-                        size="2",
-                        flex="1",
-                    ),
-                    spacing="2",
                     width="100%",
                 ),
                 
+                # Buttons
+                rx.hstack(
+                    rx.button(
+                        "Add to Cart",
+                        on_click=CartState.add_to_cart(product),
+                        variant="soft",
+                        color_scheme="blue",
+                        size="2",
+                        flex="1",
+                    ),
+                    rx.button(
+                        "Details",
+                        on_click=rx.redirect(f"/product/{product['product_id']}"),
+                        variant="outline",
+                        size="2",
+                        flex="1",
+                        color="#3b82f6",
+                    ),
+                    width="100%",
+                    spacing="2",
+                ),
                 spacing="3",
-                padding="1em",
-                align="center",
+                width="100%",
+                padding_y="2",
+            ),
+            spacing="3",
+        ),
+        _hover={
+            "transform": "translateY(-4px)",
+            "box_shadow": "0 10px 15px -3px rgba(0, 0, 0, 0.1)",
+        },
+        transition="all 0.2s",
+        width="100%",
+        border_radius="xl",
+        padding="3",
+    )
+
+def recommendation_card(product: dict):
+    return rx.box(
+        rx.card(
+            rx.vstack(
+                # Badge
+                rx.badge(
+                    "Recommended for you",
+                    variant="solid",
+                    color_scheme="blue",
+                    position="absolute",
+                    top="3",
+                    left="3",
+                    z_index="10",
+                    size="1",
+                    border_radius="full",
+                ),
+                
+                # Product Image
+                rx.image(
+                    src=product["image_url"],
+                    width="100%",
+                    height="200px",
+                    object_fit="cover",
+                    border_radius="lg",
+                ),
+                
+                # Product Details
+                rx.vstack(
+                    rx.heading(
+                        product["product_name"],
+                        size="5",
+                        text_overflow="ellipsis",
+                        white_space="nowrap",
+                        overflow="hidden",
+                        width="100%",
+                    ),
+                    rx.hstack(
+                        rx.text(f"₹{product['price']}", font_weight="bold", color="#3b82f6", size="4"),
+                        rx.spacer(),
+                        rx.hstack(
+                            rx.icon("star", size=14, color="amber"),
+                            rx.text(product["rating"].to_string(), size="2", color="gray.600"),
+                            spacing="1",
+                            align="center",
+                        ),
+                        width="100%",
+                    ),
+                    
+                    # Buttons
+                    rx.hstack(
+                        rx.button(
+                            "Add to Cart",
+                            on_click=CartState.add_to_cart(product),
+                            variant="soft",
+                            color_scheme="blue",
+                            size="2",
+                            flex="1",
+                        ),
+                        rx.button(
+                            "Details",
+                            on_click=rx.redirect(f"/product/{product['product_id']}"),
+                            variant="outline",
+                            size="2",
+                            flex="1",
+                        ),
+                        width="100%",
+                        spacing="2",
+                    ),
+                    spacing="3",
+                    width="100%",
+                    padding_y="2",
+                ),
+                spacing="3",
+                position="relative",
+            ),
+            _hover={
+                "transform": "translateY(-4px)",
+                "box_shadow": "0 10px 15px -3px rgba(0, 0, 0, 0.1)",
+            },
+            transition="all 0.2s",
+            width="100%",
+            border_radius="xl",
+            padding="3",
+        ),
+        width="100%",
+    )
+
+def wishlist_item_card(product: dict):
+    return rx.card(
+        rx.vstack(
+            # Product Image
+            rx.box(
+                rx.image(
+                    src=product["image_url"],
+                    width="100%",
+                    height="200px",
+                    object_fit="cover",
+                    border_radius="lg",
+                ),
+                position="relative",
                 width="100%",
             ),
-            spacing="0",
-            width="100%",
-            max_width="280px",
+            
+            # Product Details
+            rx.vstack(
+                rx.heading(
+                    product["product_name"],
+                    size="5",
+                    text_overflow="ellipsis",
+                    white_space="nowrap",
+                    overflow="hidden",
+                    width="100%",
+                ),
+                rx.hstack(
+                    rx.text(f"₹{product['price']}", font_weight="bold", color="#3b82f6", size="4"),
+                    rx.spacer(),
+                    rx.hstack(
+                        rx.icon("star", size=14, color="amber"),
+                        rx.text(product["rating"].to_string(), size="2", color="gray.600"),
+                        spacing="1",
+                        align="center",
+                    ),
+                    width="100%",
+                ),
+                
+                # Buttons
+                rx.vstack(
+                    rx.button(
+                        "Add to Cart",
+                        on_click=CartState.add_to_cart(product),
+                        variant="soft",
+                        color_scheme="blue",
+                        size="2",
+                        width="100%",
+                    ),
+                    rx.button(
+                        "Remove from Wishlist",
+                        on_click=lambda: WishlistState.remove_from_wishlist(product["product_id"]),
+                        variant="ghost",
+                        color_scheme="red",
+                        size="2",
+                        width="100%",
+                    ),
+                    width="100%",
+                    spacing="2",
+                ),
+                spacing="3",
+                width="100%",
+                padding_y="2",
+            ),
+            spacing="3",
         ),
-        box_shadow="md",
-        border_radius="12px",
-        overflow="hidden",
-        transition="all 0.2s",
         _hover={
-            "box_shadow": "xl",
             "transform": "translateY(-4px)",
+            "box_shadow": "0 10px 15px -3px rgba(0, 0, 0, 0.1)",
         },
+        transition="all 0.2s",
+        width="100%",
+        border_radius="xl",
+        padding="3",
     )

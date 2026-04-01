@@ -22,6 +22,12 @@ class UserState(rx.State):
     signup_email: str = ""
     signup_password: str = ""
 
+    @rx.var
+    def user_name(self) -> str:
+        if self.email:
+            return self.email.split("@")[0]
+        return ""
+
     def set_login_email(self, value: str):
         self.login_email = value
 
@@ -36,7 +42,11 @@ class UserState(rx.State):
 
     def _map_firebase_to_dataset(self, is_new: bool = False):
         """Create or find mapping between Firebase UID and dataset user_id"""
-        mapping_path = "backend/data/user_mapping.csv"
+        mapping_dir = "backend/data"
+        mapping_path = os.path.join(mapping_dir, "user_mapping.csv")
+
+        if not os.path.exists(mapping_dir):
+            os.makedirs(mapping_dir)
 
         # Load or create mapping file
         if os.path.exists(mapping_path):
@@ -74,9 +84,19 @@ class UserState(rx.State):
             self.error_message = "Please enter email and password"
             return
 
-        try:
-            api_key = "YOUR_FIREBASE_WEB_API_KEY_HERE"   # ← Change this
+        api_key = os.getenv("FIREBASE_API_KEY", "YOUR_FIREBASE_WEB_API_KEY_HERE")
 
+        if api_key == "YOUR_FIREBASE_WEB_API_KEY_HERE":
+            # MOCK LOGIN for local development
+            print("Using MOCK LOGIN")
+            self.firebase_uid = f"mock_{self.login_email.split('@')[0]}"
+            self.email = self.login_email
+            self.logged_in = True
+            self.error_message = ""
+            self._map_firebase_to_dataset(is_new=False)
+            return rx.redirect("/")
+
+        try:
             payload = {
                 "email": self.login_email,
                 "password": self.login_password,
@@ -109,9 +129,19 @@ class UserState(rx.State):
             self.error_message = "Please fill all fields"
             return
 
-        try:
-            api_key = "YOUR_FIREBASE_WEB_API_KEY_HERE"
+        api_key = os.getenv("FIREBASE_API_KEY", "YOUR_FIREBASE_WEB_API_KEY_HERE")
 
+        if api_key == "YOUR_FIREBASE_WEB_API_KEY_HERE":
+            # MOCK SIGNUP for local development
+            print("Using MOCK SIGNUP")
+            self.firebase_uid = f"mock_{self.signup_email.split('@')[0]}"
+            self.email = self.signup_email
+            self.logged_in = True
+            self.error_message = ""
+            self._map_firebase_to_dataset(is_new=True)
+            return rx.redirect("/")
+
+        try:
             payload = {
                 "email": self.signup_email,
                 "password": self.signup_password,

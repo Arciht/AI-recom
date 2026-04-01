@@ -1,182 +1,114 @@
 import reflex as rx
-from components.recommendation_card import recommendation_card
-from state.user_state import UserState
-from state.recommendation_state import RecommendationState
-from state.cart_state import CartState
+from ..components.navbar import navbar
+from ..components.footer import footer
+from ..components.product_card import product_card, recommendation_card
+from ..components.chatbot import chatbot
+from ..state.recommendation_state import RecommendationState
+from ..state.products_state import ProductsState
 
+from ..components.layout import layout
 
-@rx.page(route="/", title="AI Shop - Home")
-def index():
-    return rx.vstack(
-        # Hero Section
-        rx.box(
-            rx.vstack(
-                rx.heading(
-                    "Discover Products You’ll Love",
-                    size="9",
-                    text_align="center",
-                    line_height="1.1",
-                ),
-                rx.text(
-                    "AI-powered recommendations tailored just for you",
-                    font_size="2xl",
-                    color="gray.600",
-                    text_align="center",
-                    max_width="700px",
-                ),
-                rx.cond(
-                    UserState.logged_in,
+def index() -> rx.Component:
+    return layout(
+        rx.vstack(
+            # Hero Section
+            rx.box(
+                rx.vstack(
+                    rx.heading(
+                        "Discover Your Next Favorite Thing",
+                        size="8",
+                        color="white",
+                        text_align="center",
+                        line_height="1.2",
+                        font_weight="bold",
+                    ),
+                    rx.text(
+                        "AI-powered recommendations tailored just for you. Shop the best products across electronics, fashion, and home.",
+                        size="4",
+                        color="#e2e8f0", # Better contrast on blue
+                        text_align="center",
+                        max_width="700px",
+                    ),
                     rx.button(
-                        "View My Recommendations",
-                        on_click=rx.redirect("/recommendations"),
+                        "Get Personalized Recommendations",
+                        on_click=RecommendationState.trigger_recommendations,
                         size="4",
                         color_scheme="blue",
-                        height="55px",
-                        font_size="lg",
+                        background_color="white",
+                        color="#2563eb", # Richer blue
+                        _hover={"background_color": "#f8fafc", "transform": "scale(1.05)"},
+                        padding_x="8",
+                        transition="all 0.2s",
                     ),
-                    rx.hstack(
-                        rx.button(
-                            "Login to Get Personalized Recommendations",
-                            on_click=rx.redirect("/login"),
-                            size="4",
-                            color_scheme="blue",
-                        ),
-                        rx.button(
-                            "Browse All Products",
-                            on_click=rx.redirect("/products"),
-                            size="4",
-                            variant="outline",
-                        ),
-                        spacing="4",
-                    )
-                ),
-                spacing="6",
-                align="center",
-                padding_y="4em",
-            ),
-            width="100%",
-            background="linear-gradient(135deg, #f8fafc 0%, #e0f2fe 100%)",
-            border_bottom="1px solid #e2e8f0",
-        ),
-
-        # Recommendations Section
-        rx.vstack(
-            rx.hstack(
-                rx.heading(
-                    rx.cond(
-                        UserState.logged_in,
-                        "Recommended For You",
-                        "Popular Products"
-                    ),
-                    size="7",
-                ),
-                rx.spacer(),
-                rx.button(
-                    rx.hstack(
-                        rx.icon("refresh-cw"),
-                        rx.text("Refresh"),
-                        spacing="2",
-                    ),
-                    on_click=RecommendationState.load_recommendations,
-                    variant="outline",
-                    size="2",
-                ),
-                width="100%",
-                align="center",
-            ),
-
-            # Recommendations Grid
-            rx.grid(
-                rx.foreach(
-                    RecommendationState.recommendations,
-                    recommendation_card
-                ),
-                columns=["1", "2", "3", "4"],
-                spacing="6",
-                width="100%",
-            ),
-
-            # Empty State
-            rx.cond(
-                len(RecommendationState.recommendations) == 0,
-                rx.vstack(
-                    rx.text("No recommendations loaded yet", font_size="lg", color="gray.500"),
-                    rx.button(
-                        "Load Recommendations",
-                        on_click=RecommendationState.load_recommendations,
-                        color_scheme="green",
-                    ),
-                    padding="4em",
+                    spacing="6",
                     align="center",
-                )
+                    justify="center",
+                    height="500px",
+                    width="100%",
+                ),
+                background="linear-gradient(rgba(59, 130, 246, 0.8), rgba(59, 130, 246, 0.9)), url('https://images.unsplash.com/photo-1441986300917-64674bd600d8?q=80&w=2070&auto=format&fit=crop')",
+                background_size="cover",
+                background_position="center",
+                width="100%",
+                padding_x="8",
             ),
-
-            spacing="8",
-            width="100%",
-            padding_x="2em",
-            padding_y="3em",
-        ),
-
-        # Quick Links Section
-        rx.vstack(
-            rx.heading("Explore More", size="6", text_align="center"),
-            rx.hstack(
-                rx.card(
-                    rx.vstack(
-                        rx.icon("package", size=40, color="blue.500"),
-                        rx.text("All Products", font_weight="bold"),
-                        rx.button(
-                            "Browse",
-                            on_click=rx.redirect("/products"),
-                            variant="ghost",
-                            size="2",
-                        ),
-                        align="center",
-                        spacing="3",
+            
+            # Main Content
+            rx.vstack(
+                # Recommended Section
+                rx.vstack(
+                    rx.hstack(
+                        rx.heading("Recommended for You", size="7", color="#111827"),
+                        rx.spacer(),
+                        rx.link("View All", href="/recommendations", color="#3b82f6", font_weight="medium"),
+                        width="100%",
+                        align="end",
                     ),
-                    padding="2em",
-                    width="280px",
-                ),
-                rx.card(
-                    rx.vstack(
-                        rx.icon("heart", size=40, color="red.500"),
-                        rx.text("Recommendations", font_weight="bold"),
-                        rx.button(
-                            "View All",
-                            on_click=rx.redirect("/recommendations"),
-                            variant="ghost",
-                            size="2",
+                    rx.cond(
+                        RecommendationState.is_loading,
+                        rx.center(rx.spinner(size="3", color="#3b82f6"), width="100%", height="200px"),
+                        rx.grid(
+                            rx.foreach(
+                                RecommendationState.recommendations,
+                                recommendation_card
+                            ),
+                            columns="4",
+                            spacing="6",
+                            width="100%",
                         ),
-                        align="center",
-                        spacing="3",
                     ),
-                    padding="2em",
-                    width="280px",
+                    width="100%",
+                    padding_y="12",
                 ),
-                rx.card(
-                    rx.vstack(
-                        rx.icon("user", size=40, color="purple.500"),
-                        rx.text("My Profile", font_weight="bold"),
-                        rx.button(
-                            "Go to Profile",
-                            on_click=rx.redirect("/profile"),
-                            variant="ghost",
-                            size="2",
+                
+                # Trending Section
+                rx.vstack(
+                    rx.hstack(
+                        rx.heading("Trending Products", size="7", color="#111827"),
+                        rx.spacer(),
+                        rx.link("Shop All", href="/products", color="#3b82f6", font_weight="medium"),
+                        width="100%",
+                        align="end",
+                    ),
+                    rx.grid(
+                        rx.foreach(
+                            ProductsState.all_products[:8],
+                            product_card
                         ),
-                        align="center",
-                        spacing="3",
+                        columns="4",
+                        spacing="6",
+                        width="100%",
                     ),
-                    padding="2em",
-                    width="280px",
+                    width="100%",
+                    padding_y="12",
                 ),
-                spacing="6",
+                
+                max_width="1280px",
+                width="100%",
+                padding_x="8",
+                spacing="0",
             ),
-            padding_y="4em",
+            spacing="0",
             width="100%",
-            align="center",
-        ),
-
-        width="100%",
-        spacing="0",
-        align="center",
+        )
     )

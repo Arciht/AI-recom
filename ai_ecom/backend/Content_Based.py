@@ -19,8 +19,9 @@ def content_based_recommend(data: pd.DataFrame, item_name: str, top_n: int = 10)
     # Check if item exists
     if item_name not in data['product_name'].values:
         print(f"⚠️ Product '{item_name}' not found in the dataset.")
-        # Return top 5 popular products as fallback
-        return data.nlargest(5, 'rating')[['product_name', 'price', 'rating', 'rating_count', 'image_url']]
+        # Return top popular products as fallback
+        cols = ['product_id', 'product_name', 'price', 'rating', 'rating_count', 'image_url', 'tags', 'category']
+        return data.nlargest(top_n, 'rating')[cols]
 
     # Create TF-IDF matrix from Tags
     tfidf_vectorizer = TfidfVectorizer(
