@@ -45,12 +45,8 @@ app = rx.App(
 )
 
 # ====================== Register Pages ======================
-app.add_page(lambda: base_template(index()), route="/", title="AI Shop - Home")
 app.add_page(login_page, route="/login", title="Login - AI Shop")
 app.add_page(signup_page, route="/signup", title="Sign Up - AI Shop")
-app.add_page(lambda: base_template(products_page()), route="/products", title="All Products")
-app.add_page(lambda: base_template(recommendations_page()), route="/recommendations", title="Recommendations")
-app.add_page(lambda: base_template(cart_page()), route="/cart", title="Your Cart")
 app.add_page(product_detail_page, route="/product/[product_id]", title="Product Detail")
 app.add_page(checkout_page, route="/checkout", title="Checkout")
 

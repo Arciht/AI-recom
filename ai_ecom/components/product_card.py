@@ -68,7 +68,7 @@ def product_card(product: Dict[str, Any]) -> rx.Component:
                         on_click=lambda: CartState.add_to_cart(product),
                         color_scheme="blue",
                         variant="solid",
-                        size="sm",
+                        size="2",
                         flex="1",
                     ),
                     rx.button(
@@ -76,7 +76,7 @@ def product_card(product: Dict[str, Any]) -> rx.Component:
                         on_click=rx.redirect(f"/product/{product.get('product_id')}"),
                         color_scheme="gray",
                         variant="outline",
-                        size="sm",
+                        size="2",
                         flex="1",
                     ),
                     spacing="2",

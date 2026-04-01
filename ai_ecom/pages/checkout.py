@@ -169,7 +169,7 @@ def checkout_page():
                         ),
                         on_click=CheckoutState.complete_dummy_payment,
                         width="100%",
-                        size="lg",
+                        size="4",
                         color_scheme="green",
                         height="60px",
                         font_size="lg",
@@ -204,7 +204,7 @@ def checkout_page():
                 rx.button(
                     "Go to Login",
                     on_click=rx.redirect("/login"),
-                    size="lg",
+                    size="4",
                 ),
                 padding="6em",
             )

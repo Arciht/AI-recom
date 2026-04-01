@@ -116,7 +116,7 @@ def products_page():
             position="fixed",
             bottom="20px",
             right="20px",
-            size="lg",
+            size="4",
             color_scheme="blue",
             z_index="100",
         ) if UserState.logged_in else rx.fragment(),

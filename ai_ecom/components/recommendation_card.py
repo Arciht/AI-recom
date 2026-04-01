@@ -90,7 +90,7 @@ def recommendation_card(product: Dict[str, Any]) -> rx.Component:
                         on_click=lambda: CartState.add_to_cart(product),
                         color_scheme="blue",
                         flex="1",
-                        size="sm",
+                        size="2",
                     ),
                     rx.button(
                         "View Details",
@@ -98,7 +98,7 @@ def recommendation_card(product: Dict[str, Any]) -> rx.Component:
                         color_scheme="gray",
                         variant="outline",
                         flex="1",
-                        size="sm",
+                        size="2",
                     ),
                     spacing="3",
                     width="100%",

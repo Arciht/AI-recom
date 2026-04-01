@@ -55,7 +55,7 @@ def login_page():
                     "Login",
                     on_click=UserState.login,
                     width="100%",
-                    size="lg",
+                    size="4",
                     color_scheme="blue",
                     loading=UserState.is_hydrated,  # optional nice touch
                 ),

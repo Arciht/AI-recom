@@ -5,9 +5,10 @@ from state.cart_state import CartState
 class ProductDetailState(rx.State):
     """State for single product detail page"""
     product: dict = {}
-    current_product_id: str = ""   # Changed name to avoid conflict with route param
+    current_product_id: str = ""
 
     def load_product(self, product_id: str):
+        """Load product data from CSV when the page loads"""
         self.current_product_id = product_id
         try:
             import pandas as pd
@@ -23,11 +24,12 @@ class ProductDetailState(rx.State):
             self.product = {}
 
 
-@rx.page(route="/product/[product_id]", title="Product Detail")
-def product_detail_page(product_id: str):
-    # Load the product when the page loads
-    ProductDetailState.load_product(product_id)
-
+@rx.page(
+    route="/product/[product_id]",
+    title="Product Detail",
+    on_load=ProductDetailState.load_product
+)
+def product_detail_page(product_id: str):   # ← THIS LINE IS REQUIRED
     return rx.center(
         rx.vstack(
             # Back button
@@ -37,11 +39,12 @@ def product_detail_page(product_id: str):
                 variant="ghost",
                 align_self="flex-start",
                 margin_bottom="1em",
+                size="3",
             ),
 
             rx.cond(
                 ProductDetailState.product,
-                # Product details
+                # Product found
                 rx.hstack(
                     # Image
                     rx.image(
@@ -71,15 +74,15 @@ def product_detail_page(product_id: str):
                         rx.hstack(
                             rx.button(
                                 "Add to Cart",
-                                on_click=lambda: CartState.add_to_cart(ProductDetailState.product),
+                                on_click=CartState.add_to_cart(ProductDetailState.product),
                                 color_scheme="blue",
-                                size="lg",
+                                size="4",
                             ),
                             rx.button(
                                 "Buy Now",
                                 on_click=rx.redirect("/checkout"),
                                 color_scheme="green",
-                                size="lg",
+                                size="4",
                             ),
                             spacing="4",
                         ),
@@ -90,10 +93,14 @@ def product_detail_page(product_id: str):
                     width="100%",
                     max_width="1100px",
                 ),
-                # Not found
+                # Product not found
                 rx.vstack(
                     rx.heading("Product Not Found", size="7", color="red.500"),
-                    rx.button("Browse All Products", on_click=rx.redirect("/products"), size="lg"),
+                    rx.button(
+                        "Browse All Products", 
+                        on_click=rx.redirect("/products"), 
+                        size="4"
+                    ),
                 )
             ),
             spacing="8",

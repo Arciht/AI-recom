@@ -77,21 +77,21 @@ def profile_page():
                     rx.button(
                         "View My Orders",
                         width="100%",
-                        size="lg",
+                        size="4",
                         variant="outline",
                         # on_click=... (we'll add later)
                     ),
                     rx.button(
                         "Wishlist",
                         width="100%",
-                        size="lg",
+                        size="4",
                         variant="outline",
                     ),
                     rx.button(
                         "View Cart",
                         on_click=rx.redirect("/cart"),
                         width="100%",
-                        size="lg",
+                        size="4",
                         color_scheme="blue",
                     ),
                     rx.button(
@@ -99,7 +99,7 @@ def profile_page():
                         on_click=UserState.logout,
                         color_scheme="red",
                         width="100%",
-                        size="lg",
+                        size="4",
                     ),
                     spacing="3",
                     width="100%",
@@ -118,7 +118,7 @@ def profile_page():
                 rx.button(
                     "Go to Login",
                     on_click=rx.redirect("/login"),
-                    size="lg",
+                    size="4",
                     color_scheme="blue",
                 ),
                 spacing="6",

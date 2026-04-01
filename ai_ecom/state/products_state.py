@@ -55,7 +55,7 @@ class ProductDetailState(rx.State):
             self.product = {}
 
 
-@rx.page(route="/product/[product_id]", title="Product Detail")
+# @rx.page(route="/product/[product_id]", title="Product Detail")
 def product_detail_page(product_id: str):
     # Load product when page opens
     ProductDetailState.load_product(product_id)

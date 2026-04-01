@@ -55,7 +55,7 @@ def signup_page():
                     "Create Account",
                     on_click=UserState.signup,
                     width="100%",
-                    size="lg",
+                    size="4",
                     color_scheme="green",
                 ),
 
