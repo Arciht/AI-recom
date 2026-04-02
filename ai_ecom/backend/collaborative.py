@@ -20,7 +20,7 @@ def collaborative_recommend(data: pd.DataFrame, user_id: str, top_n: int = 10) -
     
     # Check if user exists in dataset
     if user_id not in data['user_id'].astype(str).unique():
-        print(f"⚠️ User ID {user_id} not found. Returning top rated products instead.")
+        print(f"User ID {user_id} not found. Returning top rated products instead.")
         return rating_based_recommend(data, top_n)  # Fallback (we'll create this later)
 
     # Create User-Item Matrix (User ID × Product ID)
@@ -92,7 +92,7 @@ def collaborative_recommend(data: pd.DataFrame, user_id: str, top_n: int = 10) -
         'category'
     ]].copy()
 
-    print(f"✅ Collaborative recommendations generated for user: {user_id}")
+    print(f"Collaborative recommendations generated for user: {user_id}")
     return final_recommendations
 
 

@@ -47,7 +47,7 @@ def rating_based_recommend(data: pd.DataFrame, top_n: int = 10) -> pd.DataFrame:
     # Round rating to 1 decimal place
     final_recommendations['rating'] = final_recommendations['rating'].round(1)
 
-    print(f"✅ Rating-based recommendations generated: Top {len(final_recommendations)} products")
+    print(f"Rating-based recommendations generated: Top {len(final_recommendations)} products")
 
     return final_recommendations
 

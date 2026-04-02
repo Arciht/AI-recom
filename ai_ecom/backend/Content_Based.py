@@ -3,44 +3,48 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 import os
 
+# Global cache for content-based components
+_tfidf_matrix_cache = None
+_cosine_sim_cache = None
+_last_data_len = 0
+
 def content_based_recommend(data: pd.DataFrame, item_name: str, top_n: int = 10) -> pd.DataFrame:
     """
     Recommend similar products based on Tags using TF-IDF + Cosine Similarity.
-    
-    Args:
-        data: The cleaned dataset (clean_data.csv)
-        item_name: Name of the product to find similar items for
-        top_n: Number of recommendations to return
-    
-    Returns:
-        DataFrame with recommended products
     """
+    global _tfidf_matrix_cache, _cosine_sim_cache, _last_data_len
     
     # Check if item exists
     if item_name not in data['product_name'].values:
-        print(f"⚠️ Product '{item_name}' not found in the dataset.")
+        print(f"Product '{item_name}' not found in the dataset.")
         # Return top popular products as fallback
         cols = ['product_id', 'product_name', 'price', 'rating', 'rating_count', 'image_url', 'tags', 'category']
         return data.nlargest(top_n, 'rating')[cols]
 
-    # Create TF-IDF matrix from Tags
-    tfidf_vectorizer = TfidfVectorizer(
-        stop_words='english',
-        max_features=5000,          # Limit features for performance
-        ngram_range=(1, 2)          # Consider bigrams for better matching
-    )
-    
+    # Use cached components if data hasn't changed
+    if _tfidf_matrix_cache is None or len(data) != _last_data_len:
+        print("Precomputing TF-IDF matrix and Cosine Similarity...")
+        tfidf_vectorizer = TfidfVectorizer(
+            stop_words='english',
+            max_features=5000,
+            ngram_range=(1, 2)
+        )
+        
+        try:
+            _tfidf_matrix_cache = tfidf_vectorizer.fit_transform(data['tags'].fillna(''))
+            _cosine_sim_cache = cosine_similarity(_tfidf_matrix_cache, _tfidf_matrix_cache)
+            _last_data_len = len(data)
+            print("Precomputation complete.")
+        except Exception as e:
+            print(f"Error in precomputation: {e}")
+            return data.nlargest(top_n, 'rating')
+
     try:
-        tfidf_matrix = tfidf_vectorizer.fit_transform(data['tags'].fillna(''))
-        
-        # Compute cosine similarity
-        cosine_sim = cosine_similarity(tfidf_matrix, tfidf_matrix)
-        
         # Get index of the input item
         item_index = data[data['product_name'] == item_name].index[0]
         
         # Get similarity scores for all items
-        similarity_scores = list(enumerate(cosine_sim[item_index]))
+        similarity_scores = list(enumerate(_cosine_sim_cache[item_index]))
         
         # Sort by similarity score (descending)
         similar_items = sorted(similarity_scores, key=lambda x: x[1], reverse=True)
@@ -66,11 +70,11 @@ def content_based_recommend(data: pd.DataFrame, item_name: str, top_n: int = 10)
         # Add similarity score for debugging (optional)
         recommended_products['similarity_score'] = [score for idx, score in top_similar]
         
-        print(f"✅ Content-based recommendations generated for: {item_name}")
+        print(f"Content-based recommendations generated for: {item_name}")
         return recommended_products
         
     except Exception as e:
-        print(f"❌ Error in content-based recommendation: {e}")
+        print(f"Error in content-based recommendation: {e}")
         # Fallback: Return top rated products
         return data.nlargest(top_n, 'rating')[[
             'product_id', 'product_name', 'price', 'rating', 'rating_count', 'image_url'

@@ -9,21 +9,24 @@ load_dotenv()
 class UserState(rx.State):
     """Handles Firebase Authentication + Mapping to Dataset user_id"""
 
-    firebase_uid: str = ""
-    user_id: str = ""           # This will store the integer ID from dataset
-    email: str = ""
-    logged_in: bool = False
-    user_type: str = "new"      # "new" or "old"
+    firebase_uid: str = rx.LocalStorage("")
+    user_id: str = rx.LocalStorage("")           # This will store the integer ID from dataset
+    email: str = rx.LocalStorage("")
+    logged_in: bool = rx.LocalStorage(False)
+    user_type: str = rx.LocalStorage("new")      # "new" or "old"
     error_message: str = ""
 
     # Login Form
     login_email: str = ""
     login_password: str = ""
+    signup_name: str = rx.LocalStorage("")
     signup_email: str = ""
     signup_password: str = ""
 
     @rx.var
     def user_name(self) -> str:
+        if self.signup_name:
+            return self.signup_name
         if self.email:
             return self.email.split("@")[0]
         return ""
@@ -34,6 +37,9 @@ class UserState(rx.State):
     def set_login_password(self, value: str):
         self.login_password = value
 
+    def set_signup_name(self, value: str):
+        self.signup_name = value
+
     def set_signup_email(self, value: str):
         self.signup_email = value
 
@@ -42,11 +48,13 @@ class UserState(rx.State):
 
     def _map_firebase_to_dataset(self, is_new: bool = False):
         """Create or find mapping between Firebase UID and dataset user_id"""
-        mapping_dir = "backend/data"
+        # Get absolute path to mapping file
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        mapping_dir = os.path.join(os.path.dirname(current_dir), "backend", "data")
         mapping_path = os.path.join(mapping_dir, "user_mapping.csv")
 
         if not os.path.exists(mapping_dir):
-            os.makedirs(mapping_dir)
+            os.makedirs(mapping_dir, exist_ok=True)
 
         # Load or create mapping file
         if os.path.exists(mapping_path):
@@ -125,7 +133,7 @@ class UserState(rx.State):
             self.error_message = f"Login failed: {str(e)}"
 
     def signup(self):
-        if not self.signup_email or not self.signup_password:
+        if not self.signup_email or not self.signup_password or not self.signup_name:
             self.error_message = "Please fill all fields"
             return
 
@@ -176,4 +184,9 @@ class UserState(rx.State):
         self.logged_in = False
         self.user_type = "new"
         self.error_message = ""
+        self.login_email = ""
+        self.login_password = ""
+        self.signup_name = ""
+        self.signup_email = ""
+        self.signup_password = ""
         return rx.redirect("/login")

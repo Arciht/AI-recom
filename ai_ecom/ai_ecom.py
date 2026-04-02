@@ -36,6 +36,8 @@ app = rx.App(
     style={
         "font_family": "Inter, sans-serif",
         "background_color": "#ffffff",
+        "color": "#111827", # Default text color (almost black)
+        "font_size": "16px", # Balanced base font size
     }
 )
 

@@ -1,17 +1,40 @@
 import reflex as rx
+import asyncio
 from ..components.navbar import navbar
 from ..components.footer import footer
 from ..state.cart_state import CartState
+from .orders import OrdersState, Order, OrderItem
+import datetime
 
 class PaymentState(rx.State):
     is_processing: bool = False
     
-    def process_payment(self):
+    async def process_payment(self):
         self.is_processing = True
-        return rx.wait(2, PaymentState.complete_payment)
+        yield
+        await asyncio.sleep(2)
+        yield PaymentState.complete_payment
     
-    def complete_payment(self):
+    async def complete_payment(self):
         self.is_processing = False
+        
+        # Create new order from cart
+        order_items = [
+            OrderItem(name=item["product_name"], price=str(item["price"]), qty=item["quantity"])
+            for item in CartState.cart_items
+        ]
+        
+        new_order = Order(
+            order_id=f"ORD-2026-{datetime.datetime.now().strftime('%M%S')}",
+            date=datetime.datetime.now().strftime("%b %d, %Y"),
+            total=str(CartState.total),
+            status="Processing",
+            order_items=order_items
+        )
+        
+        orders_state = await self.get_state(OrdersState)
+        orders_state.add_order(new_order)
+        
         CartState.clear_cart()
         return rx.redirect("/payment-success")
 

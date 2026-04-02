@@ -25,6 +25,7 @@ def login_page() -> rx.Component:
                             value=UserState.login_email,
                             size="3",
                             width="100%",
+                            color="#111827", # Black text
                         ),
                         rx.text("Password", size="2", font_weight="medium", width="100%"),
                         rx.input(
@@ -34,6 +35,7 @@ def login_page() -> rx.Component:
                             value=UserState.login_password,
                             size="3",
                             width="100%",
+                            color="#111827", # Black text
                         ),
                         rx.link("Forgot password?", href="#", size="2", color="#3b82f6", align_self="end"),
                         width="100%",

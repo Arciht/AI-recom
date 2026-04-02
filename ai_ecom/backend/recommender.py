@@ -5,16 +5,15 @@ from .ratingbased import rating_based_recommend
 
 import os
 
-def get_recommendations(user_id=None, user_type: str = "new", top_n: int = 10):
-    """
-    Main recommendation orchestrator.
-    Combines different recommendation strategies based on user type.
-    
-    Args:
-        user_id: Numeric user ID from dataset (for existing users)
-        user_type: "new" or "old"
-        top_n: Number of recommendations to return
-    """
+# Global cache for the dataframe
+_cached_df = None
+
+def get_df():
+    """Helper to get or load the dataframe"""
+    global _cached_df
+    if _cached_df is not None:
+        return _cached_df
+        
     try:
         # Get the path to clean_data.csv relative to this file
         current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -39,14 +38,30 @@ def get_recommendations(user_id=None, user_type: str = "new", top_n: int = 10):
         if "price" not in df.columns:
             df["price"] = df["product_id"].apply(lambda x: round((hash(str(x)) % 10000) / 100 + 499, 2))
             
-        print(f"✅ Loaded dataset with {len(df)} products")
+        print(f"Loaded dataset with {len(df)} products")
+        _cached_df = df
+        return df
     except FileNotFoundError:
-        print(f"❌ Error: clean_data.csv not found at {data_path}")
+        print(f"Error: clean_data.csv not found at {data_path}")
+        return None
+
+def get_recommendations(user_id=None, user_type: str = "new", top_n: int = 10):
+    """
+    Main recommendation orchestrator.
+    Combines different recommendation strategies based on user type.
+    
+    Args:
+        user_id: Numeric user ID from dataset (for existing users)
+        user_type: "new" or "old"
+        top_n: Number of recommendations to return
+    """
+    df = get_df()
+    if df is None:
         return []
 
     # === New User → Rating Based (Popular Products) ===
     if user_type == "new" or user_id is None:
-        print(f"🆕 New User detected → Returning Top Rated Products")
+        print(f"New User detected -> Returning Top Rated Products")
         recommendations = rating_based_recommend(df, top_n)
         # Ensure columns exist even in output
         if not recommendations.empty:
@@ -56,7 +71,7 @@ def get_recommendations(user_id=None, user_type: str = "new", top_n: int = 10):
         return recommendations.to_dict(orient="records")
 
     # === Existing User → Hybrid Approach ===
-    print(f"👤 Existing User (ID: {user_id}) → Using Hybrid Recommendations")
+    print(f"Existing User (ID: {user_id}) -> Using Hybrid Recommendations")
 
     # 1. Collaborative Filtering (Similar Users)
     collab_recs = collaborative_recommend(df, user_id, top_n=top_n // 2 + 2)
@@ -94,7 +109,7 @@ def get_recommendations(user_id=None, user_type: str = "new", top_n: int = 10):
         'category'
     ]].to_dict(orient="records")
 
-    print(f"✅ Final recommendations ready: {len(result)} products")
+    print(f"Final recommendations ready: {len(result)} products")
     return result
 
 

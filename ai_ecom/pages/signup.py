@@ -21,8 +21,11 @@ def signup_page() -> rx.Component:
                         rx.text("Full Name", size="2", font_weight="medium", width="100%"),
                         rx.input(
                             placeholder="John Doe",
+                            on_change=UserState.set_signup_name,
+                            value=UserState.signup_name,
                             size="3",
                             width="100%",
+                            color="#111827", # Black text
                         ),
                         rx.text("Email Address", size="2", font_weight="medium", width="100%"),
                         rx.input(
@@ -31,15 +34,17 @@ def signup_page() -> rx.Component:
                             value=UserState.signup_email,
                             size="3",
                             width="100%",
+                            color="#111827", # Black text
                         ),
                         rx.text("Password", size="2", font_weight="medium", width="100%"),
                         rx.input(
                             type="password",
                             placeholder="••••••••",
-                            on_change=UserState.set_signup_email,
+                            on_change=UserState.set_signup_password,
                             value=UserState.signup_password,
                             size="3",
                             width="100%",
+                            color="#111827", # Black text
                         ),
                         width="100%",
                         spacing="4",

@@ -35,19 +35,19 @@ def product_card(product: dict):
             rx.vstack(
                 rx.heading(
                     product["product_name"],
-                    size="5",
+                    size="4", # Reduced from 5
                     text_overflow="ellipsis",
                     white_space="nowrap",
                     overflow="hidden",
                     width="100%",
-                    color="#1e293b", # Slate-800
+                    color="#111827", # Explicitly dark
                 ),
                 rx.hstack(
-                    rx.text(f"₹{product['price']}", font_weight="bold", color="#2563eb", size="4"),
+                    rx.text(f"₹{product['price']}", font_weight="bold", color="#2563eb", size="3"), # Reduced from 4
                     rx.spacer(),
                     rx.hstack(
                         rx.icon("star", size=14, color="#f59e0b"), # Amber-500
-                        rx.text(product["rating"].to_string(), size="2", color="#64748b"), # Slate-500
+                        rx.text(product["rating"].to_string(), size="2", color="#4b5563"), # Darker gray
                         spacing="1",
                         align="center",
                     ),
@@ -121,18 +121,19 @@ def recommendation_card(product: dict):
                 rx.vstack(
                     rx.heading(
                         product["product_name"],
-                        size="5",
+                        size="4", # Reduced from 5
                         text_overflow="ellipsis",
                         white_space="nowrap",
                         overflow="hidden",
                         width="100%",
+                        color="#111827", # Explicitly dark
                     ),
                     rx.hstack(
-                        rx.text(f"₹{product['price']}", font_weight="bold", color="#3b82f6", size="4"),
+                        rx.text(f"₹{product['price']}", font_weight="bold", color="#2563eb", size="3"), # Reduced from 4
                         rx.spacer(),
                         rx.hstack(
-                            rx.icon("star", size=14, color="amber"),
-                            rx.text(product["rating"].to_string(), size="2", color="gray.600"),
+                            rx.icon("star", size=14, color="#f59e0b"),
+                            rx.text(product["rating"].to_string(), size="2", color="#4b5563"),
                             spacing="1",
                             align="center",
                         ),

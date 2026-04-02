@@ -13,7 +13,7 @@ def layout(child: rx.Component) -> rx.Component:
                 min_height="80vh",
                 background_color="#f8fafc", # Lighter background
             ),
-            footer(),
+            # footer(), # Footer removed as requested
             spacing="0",
             width="100%",
         ),

@@ -38,39 +38,8 @@ def products_page() -> rx.Component:
                 align="center",
             ),
             
-            # Main Content with Sidebar
-            rx.hstack(
-                # Sidebar Filters
-                rx.vstack(
-                    rx.heading("Categories", size="4", color="#111827", margin_bottom="4"),
-                    rx.vstack(
-                        rx.button("All Products", variant="ghost", width="100%", justify_content="start", color_scheme="blue"),
-                        rx.button("Electronics", variant="ghost", width="100%", justify_content="start", color="gray.600"),
-                        rx.button("Fashion", variant="ghost", width="100%", justify_content="start", color="gray.600"),
-                        rx.button("Home & Kitchen", variant="ghost", width="100%", justify_content="start", color="gray.600"),
-                        rx.button("Beauty", variant="ghost", width="100%", justify_content="start", color="gray.600"),
-                        spacing="1",
-                        width="100%",
-                    ),
-                    rx.divider(margin_y="6"),
-                    rx.heading("Price Range", size="4", color="#111827", margin_bottom="4"),
-                    rx.vstack(
-                        rx.checkbox("Under ₹500", size="2"),
-                        rx.checkbox("₹500 - ₹2000", size="2"),
-                        rx.checkbox("₹2000 - ₹5000", size="2"),
-                        rx.checkbox("Over ₹5000", size="2"),
-                        align="start",
-                        spacing="3",
-                    ),
-                    width="250px",
-                    padding="6",
-                    background_color="white",
-                    border_radius="xl",
-                    border="1px solid #f3f4f6",
-                    display=["none", "none", "flex"],
-                    align_self="start",
-                ),
-                
+            # Main Content - Removed Sidebar
+            rx.vstack(
                 # Products Grid
                 rx.vstack(
                     rx.cond(
@@ -90,7 +59,7 @@ def products_page() -> rx.Component:
                                 ProductsState.filtered_products,
                                 product_card
                             ),
-                            columns=rx.breakpoints(initial="1", sm="2", md="3", lg="3"),
+                            columns=rx.breakpoints(initial="1", sm="2", md="3", lg="4"), # Increased columns since sidebar is gone
                             spacing="6",
                             width="100%",
                         ),

@@ -11,13 +11,13 @@ def recommendations_page() -> rx.Component:
         rx.vstack(
             # Header Section
             rx.vstack(
-                rx.heading("Personalized Recommendations", size="9", color="#111827"),
-                rx.text("AI-powered suggestions based on your unique preferences and history.", color="gray.600", size="4"),
+                rx.heading("Personalized Recommendations", size="7", color="#111827"), # Reduced from 9
+                rx.text("AI-powered suggestions based on your unique preferences and history.", color="#374151", size="3"), # Reduced from 4
                 rx.button(
                     "Refresh Recommendations",
                     on_click=RecommendationState.refresh_recommendations,
                     color_scheme="blue",
-                    variant="soft",
+                    variant="solid", # Changed from soft for better contrast
                     size="3",
                     margin_top="6",
                 ),
@@ -40,15 +40,22 @@ def recommendations_page() -> rx.Component:
                     rx.cond(
                         RecommendationState.is_loading,
                         rx.center(rx.spinner(size="3", color="#3b82f6"), width="100%", height="400px"),
-                        rx.grid(
-                            rx.foreach(
-                                RecommendationState.content_based_recs,
-                                recommendation_card
+                        rx.cond(
+                            RecommendationState.content_based_recs.length() > 0,
+                            rx.grid(
+                                rx.foreach(
+                                    RecommendationState.content_based_recs,
+                                    recommendation_card
+                                ),
+                                columns="4",
+                                spacing="6",
+                                width="100%",
+                                padding_bottom="20",
                             ),
-                            columns="4",
-                            spacing="6",
-                            width="100%",
-                            padding_bottom="20",
+                            rx.center(
+                                rx.text("No history-based recommendations yet.", color="gray.500", padding="20"),
+                                width="100%",
+                            ),
                         ),
                     ),
                     value="history",
@@ -57,15 +64,22 @@ def recommendations_page() -> rx.Component:
                     rx.cond(
                         RecommendationState.is_loading,
                         rx.center(rx.spinner(size="3", color="#3b82f6"), width="100%", height="400px"),
-                        rx.grid(
-                            rx.foreach(
-                                RecommendationState.collaborative_recs,
-                                recommendation_card
+                        rx.cond(
+                            RecommendationState.collaborative_recs.length() > 0,
+                            rx.grid(
+                                rx.foreach(
+                                    RecommendationState.collaborative_recs,
+                                    recommendation_card
+                                ),
+                                columns="4",
+                                spacing="6",
+                                width="100%",
+                                padding_bottom="20",
                             ),
-                            columns="4",
-                            spacing="6",
-                            width="100%",
-                            padding_bottom="20",
+                            rx.center(
+                                rx.text("No collaborative recommendations yet.", color="gray.500", padding="20"),
+                                width="100%",
+                            ),
                         ),
                     ),
                     value="collaborative",

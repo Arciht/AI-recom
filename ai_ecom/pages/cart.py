@@ -61,9 +61,21 @@ def cart_page() -> rx.Component:
                                     rx.vstack(
                                         rx.text(f"₹{item['price']}", font_weight="bold", size="4"),
                                         rx.hstack(
-                                            rx.text("Qty:", size="2", color="gray.500"),
-                                            rx.text(item["quantity"].to_string(), font_weight="medium"),
-                                            spacing="2",
+                                            rx.button(
+                                                rx.icon("minus", size=14),
+                                                on_click=lambda: CartState.update_quantity(item["product_id"], -1),
+                                                size="1",
+                                                variant="soft",
+                                            ),
+                                            rx.text(item["quantity"].to_string(), font_weight="medium", padding_x="2"),
+                                            rx.button(
+                                                rx.icon("plus", size=14),
+                                                on_click=lambda: CartState.update_quantity(item["product_id"], 1),
+                                                size="1",
+                                                variant="soft",
+                                            ),
+                                            spacing="1",
+                                            align="center",
                                         ),
                                         align="end",
                                     ),

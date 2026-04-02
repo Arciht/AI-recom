@@ -10,4 +10,5 @@ dependencies = [
     "reflex>=0.8.28.post1",
     "requests>=2.33.1",
     "scikit-learn>=1.8.0",
+    "groq>=0.15.0",
 ]

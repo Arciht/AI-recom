@@ -20,24 +20,27 @@ class OrdersState(rx.State):
     orders: List[Order] = [
         Order(
             order_id="ORD-2024-AI89",
-            date="March 15, 2024",
-            total="4,599.00",
+            date="Oct 24, 2024",
+            total="2499.00",
             status="Delivered",
             order_items=[
-                OrderItem(name="Wireless Headphones", price="2,499.00", qty=1),
-                OrderItem(name="Smart Watch", price="2,100.00", qty=1),
+                OrderItem(name="Wireless Headphones", price="1999.00", qty=1),
+                OrderItem(name="USB-C Cable", price="500.00", qty=1),
             ]
         ),
         Order(
-            order_id="ORD-2024-AI42",
-            date="February 28, 2024",
-            total="1,200.00",
-            status="Shipped",
+            order_id="ORD-2024-AI92",
+            date="Nov 12, 2024",
+            total="1299.00",
+            status="Processing",
             order_items=[
-                OrderItem(name="USB-C Hub", price="1,200.00", qty=1),
+                OrderItem(name="Smartphone Case", price="1299.00", qty=1),
             ]
         )
     ]
+
+    def add_order(self, order: Order):
+        self.orders.insert(0, order)
 
 from ..components.layout import layout
 

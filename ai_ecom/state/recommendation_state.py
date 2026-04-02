@@ -30,6 +30,11 @@ class RecommendationState(rx.State):
             # Map columns and clean up
             mapped_recs = []
             for r in raw_recs:
+                # Defensive check: ensure r is a dictionary
+                if not isinstance(r, dict):
+                    print(f"Warning: recommendation item is not a dict: {r}")
+                    continue
+                    
                 # The raw_recs might already have mapped columns or original ones
                 # We normalize them here for the frontend
                 item = {
@@ -59,7 +64,9 @@ class RecommendationState(rx.State):
             self.is_loading = False
 
     async def trigger_recommendations(self):
-        await self.load_recommendations()
+        """Action for the hero section button"""
+        if not self.recommendations:
+            await self.load_recommendations()
         return rx.redirect("/recommendations")
 
     async def refresh_recommendations(self):

@@ -1,9 +1,14 @@
 import reflex as rx
+import os
+from groq import Groq
+from dotenv import load_dotenv
+
+load_dotenv()
 
 class ChatState(rx.State):
     is_open: bool = False
     messages: list[dict] = [
-        {"role": "bot", "content": "Hello! How can I help you today?"}
+        {"role": "bot", "content": "Hello! I'm your AI Shopping Assistant. How can I help you today?"}
     ]
     input_text: str = ""
 
@@ -14,11 +19,47 @@ class ChatState(rx.State):
         self.input_text = text
 
     def send_message(self):
-        if self.input_text.strip():
-            self.messages.append({"role": "user", "content": self.input_text})
-            # Dummy bot response
-            self.messages.append({"role": "bot", "content": "That's interesting! I'm here to help you find the best products."})
-            self.input_text = ""
+        if not self.input_text.strip():
+            return
+
+        user_msg = self.input_text
+        self.messages.append({"role": "user", "content": user_msg})
+        self.input_text = ""
+
+        # Groq LLM integration
+        api_key = os.getenv("GROQ_API_KEY")
+        if not api_key:
+            self.messages.append({
+                "role": "bot", 
+                "content": "I'm sorry, but the Groq API key is not configured. Please add GROQ_API_KEY to your .env file to enable the AI Chatbot."
+            })
+            return
+
+        try:
+            client = Groq(api_key=api_key)
+            
+            # Convert messages to Groq format
+            groq_messages = [
+                {"role": "system", "content": "You are a helpful AI Shopping Assistant for 'AI Shop'. You help users find products, answer questions about shopping, and provide recommendations. IMPORTANT: Always provide prices in Indian Rupees (₹). If you see a price like $10, convert it or simply state it as ₹800 approximately. Be concise and friendly."}
+            ]
+            for msg in self.messages[-5:]: # Only send last 5 messages for context
+                role = "assistant" if msg["role"] == "bot" else "user"
+                groq_messages.append({"role": role, "content": msg["content"]})
+
+            chat_completion = client.chat.completions.create(
+                messages=groq_messages,
+                model="llama-3.3-70b-versatile",
+            )
+            
+            bot_response = chat_completion.choices[0].message.content
+            self.messages.append({"role": "bot", "content": bot_response})
+            
+        except Exception as e:
+            print(f"Error in Groq Chatbot: {e}")
+            self.messages.append({
+                "role": "bot", 
+                "content": f"I'm having trouble connecting to my AI brain right now. Error: {str(e)}"
+            })
 
 def chatbot():
     return rx.box(
