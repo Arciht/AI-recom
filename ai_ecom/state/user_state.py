@@ -189,4 +189,4 @@ class UserState(rx.State):
         self.signup_name = ""
         self.signup_email = ""
         self.signup_password = ""
-        return rx.redirect("/login")
+        return [rx.toast("Logged out successfully"), rx.redirect("/login")]

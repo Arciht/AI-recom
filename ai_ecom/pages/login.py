@@ -23,6 +23,7 @@ def login_page() -> rx.Component:
                             placeholder="name@example.com",
                             on_change=UserState.set_login_email,
                             value=UserState.login_email,
+                            debounce_timeout=0,
                             size="3",
                             width="100%",
                             color="#111827", # Black text
@@ -33,6 +34,7 @@ def login_page() -> rx.Component:
                             placeholder="••••••••",
                             on_change=UserState.set_login_password,
                             value=UserState.login_password,
+                            debounce_timeout=0,
                             size="3",
                             width="100%",
                             color="#111827", # Black text

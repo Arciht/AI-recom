@@ -37,7 +37,7 @@ def navbar():
                     width=["150px", "250px", "400px"],
                     size="3",
                     border_radius="full",
-                    value=ProductsState.search_query,
+                    debounce_timeout=0,
                     on_change=ProductsState.set_search_query,
                     on_key_down=lambda e: rx.cond(e == "Enter", NavbarState.handle_search(ProductsState.search_query), rx.console_log("")),
                 ),
@@ -84,21 +84,29 @@ def navbar():
                 # User Menu
                 rx.cond(
                     UserState.logged_in,
-                    rx.menu.root(
-                        rx.menu.trigger(
-                            rx.avatar(
-                                fallback=UserState.user_name[:2].upper(),
-                                size="3",
-                                cursor="pointer",
-                            )
+                    rx.hstack(
+                        rx.menu.root(
+                            rx.menu.trigger(
+                                rx.avatar(
+                                    fallback=UserState.user_name[:2].upper(),
+                                    size="3",
+                                    cursor="pointer",
+                                )
+                            ),
+                            rx.menu.content(
+                                rx.menu.item("Profile", on_click=rx.redirect("/profile")),
+                                rx.menu.item("Orders", on_click=rx.redirect("/orders")),
+                                rx.menu.item("Wishlist", on_click=rx.redirect("/wishlist")),
+                            ),
                         ),
-                        rx.menu.content(
-                            rx.menu.item("Profile", on_click=rx.redirect("/profile")),
-                            rx.menu.item("Orders", on_click=rx.redirect("/orders")),
-                            rx.menu.item("Wishlist", on_click=rx.redirect("/wishlist")),
-                            rx.menu.separator(),
-                            rx.menu.item("Logout", on_click=UserState.logout, color="red"),
+                        rx.button(
+                            "Logout",
+                            on_click=UserState.logout,
+                            color_scheme="red",
+                            variant="ghost",
+                            size="3",
                         ),
+                        spacing="3",
                     ),
                     rx.button(
                         "Login",
@@ -133,10 +141,12 @@ def navbar():
                 rx.link("Products", href="/products", color="gray.700", padding_y="2", width="100%"),
                 rx.link("Recommendations", href="/recommendations", color="gray.700", padding_y="2", width="100%"),
                 rx.link("Cart", href="/cart", color="gray.700", padding_y="2", width="100%"),
+                rx.link("Wishlist", href="/wishlist", color="gray.700", padding_y="2", width="100%"),
                 rx.cond(
                     UserState.logged_in,
                     rx.vstack(
                         rx.link("Profile", href="/profile", color="gray.700", padding_y="2", width="100%"),
+                        rx.link("Orders", href="/orders", color="gray.700", padding_y="2", width="100%"),
                         rx.link("Logout", on_click=UserState.logout, color="red", padding_y="2", width="100%"),
                         width="100%",
                         align="start",

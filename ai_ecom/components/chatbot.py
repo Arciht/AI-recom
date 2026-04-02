@@ -128,12 +128,13 @@ def chatbot():
                     # Input
                     rx.hstack(
                         rx.input(
-                            placeholder="Type a message...",
+                            placeholder="Type your message...",
                             value=ChatState.input_text,
                             on_change=ChatState.set_input_text,
+                            debounce_timeout=0,
                             on_key_down=lambda e: rx.cond(e == "Enter", ChatState.send_message(), rx.console_log("")),
-                            size="3",
-                            flex="1",
+                            width="100%",
+                            border_radius="full",
                         ),
                         rx.button(
                             rx.icon("send", size=18),

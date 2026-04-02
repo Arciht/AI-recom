@@ -4,12 +4,14 @@ from ..components.footer import footer
 
 from typing import List, Dict, Any
 
-class OrderItem(rx.Base):
+from pydantic import BaseModel
+
+class OrderItem(BaseModel):
     name: str
     price: str
     qty: int
 
-class Order(rx.Base):
+class Order(BaseModel):
     order_id: str
     date: str
     total: str
@@ -17,27 +19,7 @@ class Order(rx.Base):
     order_items: List[OrderItem]
 
 class OrdersState(rx.State):
-    orders: List[Order] = [
-        Order(
-            order_id="ORD-2024-AI89",
-            date="Oct 24, 2024",
-            total="2499.00",
-            status="Delivered",
-            order_items=[
-                OrderItem(name="Wireless Headphones", price="1999.00", qty=1),
-                OrderItem(name="USB-C Cable", price="500.00", qty=1),
-            ]
-        ),
-        Order(
-            order_id="ORD-2024-AI92",
-            date="Nov 12, 2024",
-            total="1299.00",
-            status="Processing",
-            order_items=[
-                OrderItem(name="Smartphone Case", price="1299.00", qty=1),
-            ]
-        )
-    ]
+    orders: List[Order] = []
 
     def add_order(self, order: Order):
         self.orders.insert(0, order)

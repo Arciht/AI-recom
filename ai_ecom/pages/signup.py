@@ -23,6 +23,7 @@ def signup_page() -> rx.Component:
                             placeholder="John Doe",
                             on_change=UserState.set_signup_name,
                             value=UserState.signup_name,
+                            debounce_timeout=0,
                             size="3",
                             width="100%",
                             color="#111827", # Black text
@@ -32,6 +33,7 @@ def signup_page() -> rx.Component:
                             placeholder="name@example.com",
                             on_change=UserState.set_signup_email,
                             value=UserState.signup_email,
+                            debounce_timeout=0,
                             size="3",
                             width="100%",
                             color="#111827", # Black text
@@ -42,6 +44,7 @@ def signup_page() -> rx.Component:
                             placeholder="••••••••",
                             on_change=UserState.set_signup_password,
                             value=UserState.signup_password,
+                            debounce_timeout=0,
                             size="3",
                             width="100%",
                             color="#111827", # Black text
