@@ -12,3 +12,7 @@ __pycache__/
 firebase_key.json
 *.json
 .env
+*.env
+groq_api_key
+*.json
+.env
