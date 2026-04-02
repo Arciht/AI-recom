@@ -42,10 +42,16 @@ def cart_page() -> rx.Component:
                             CartState.cart_items,
                             lambda item: rx.card(
                                 rx.hstack(
-                                    rx.image(src=item["image_url"], width="100px", height="100px", object_fit="cover", border_radius="lg"),
+                                    rx.image(
+                                        src=rx.cond(item["image_url"], item["image_url"], "https://via.placeholder.com/150"),
+                                        width="100px", 
+                                        height="100px", 
+                                        object_fit="cover", 
+                                        border_radius="lg"
+                                    ),
                                     rx.vstack(
-                                        rx.heading(item["product_name"], size="4", color="#111827"),
-                                        rx.text(item["category"], color="gray.500", size="2"),
+                                        rx.heading(rx.cond(item["product_name"], item["product_name"], "Product"), size="4", color="#111827"),
+                                        rx.text(rx.cond(item["category"], item["category"], "Category"), color="gray.500", size="2"),
                                         rx.button(
                                             "Remove",
                                             on_click=lambda: CartState.remove_from_cart(item["product_id"]),
@@ -59,7 +65,11 @@ def cart_page() -> rx.Component:
                                     ),
                                     rx.spacer(),
                                     rx.vstack(
-                                        rx.text(f"₹{item['price']}", font_weight="bold", size="4"),
+                                        rx.text(
+                                            rx.cond(item["price"], "₹" + item["price"].to_string(), "₹0.00"), 
+                                            font_weight="bold", 
+                                            size="4"
+                                        ),
                                         rx.hstack(
                                             rx.button(
                                                 rx.icon("minus", size=14),
@@ -67,7 +77,11 @@ def cart_page() -> rx.Component:
                                                 size="1",
                                                 variant="soft",
                                             ),
-                                            rx.text(item["quantity"].to_string(), font_weight="medium", padding_x="2"),
+                                            rx.text(
+                                                rx.cond(item["quantity"], item["quantity"].to_string(), "1"), 
+                                                font_weight="medium", 
+                                                padding_x="2"
+                                            ),
                                             rx.button(
                                                 rx.icon("plus", size=14),
                                                 on_click=lambda: CartState.update_quantity(item["product_id"], 1),

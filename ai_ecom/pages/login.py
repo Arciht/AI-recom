@@ -39,7 +39,14 @@ def login_page() -> rx.Component:
                             width="100%",
                             color="#111827", # Black text
                         ),
-                        rx.link("Forgot password?", href="#", size="2", color="#3b82f6", align_self="end"),
+                        rx.link(
+                            "Forgot password?", 
+                            on_click=UserState.forgot_password, 
+                            size="2", 
+                            color="#3b82f6", 
+                            align_self="end",
+                            cursor="pointer",
+                        ),
                         width="100%",
                         spacing="4",
                     ),

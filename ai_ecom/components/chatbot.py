@@ -5,6 +5,8 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+from ..state.products_state import ProductsState
+
 class ChatState(rx.State):
     is_open: bool = False
     messages: list[dict] = [
@@ -18,7 +20,7 @@ class ChatState(rx.State):
     def set_input_text(self, text: str):
         self.input_text = text
 
-    def send_message(self):
+    async def send_message(self):
         if not self.input_text.strip():
             return
 
@@ -38,9 +40,13 @@ class ChatState(rx.State):
         try:
             client = Groq(api_key=api_key)
             
+            # Get products context from ProductsState
+            products_state = await self.get_state(ProductsState)
+            products_info = products_state.chatbot_context
+
             # Convert messages to Groq format
             groq_messages = [
-                {"role": "system", "content": "You are a helpful AI Shopping Assistant for 'AI Shop'. You help users find products, answer questions about shopping, and provide recommendations. IMPORTANT: Always provide prices in Indian Rupees (₹). If you see a price like $10, convert it or simply state it as ₹800 approximately. Be concise and friendly."}
+                {"role": "system", "content": f"You are a helpful AI Shopping Assistant for 'AI Shop'. You help users find products, answer questions about shopping, and provide recommendations. \n\n{products_info}\n\nIMPORTANT: \n1. Always provide prices in Indian Rupees (₹). \n2. When suggesting a product from the list above, ALWAYS provide a markdown link to it in this format: [Product Name](/product/PRODUCT_ID). For example: [Wireless Headphones](/product/123). \n3. Be concise and friendly."}
             ]
             for msg in self.messages[-5:]: # Only send last 5 messages for context
                 role = "assistant" if msg["role"] == "bot" else "user"
@@ -102,13 +108,13 @@ def chatbot():
                             rx.foreach(
                                 ChatState.messages,
                                 lambda msg: rx.box(
-                                    rx.text(
+                                    rx.markdown(
                                         msg["content"],
                                         padding="3",
                                         border_radius="lg",
                                         background_color=rx.cond(msg["role"] == "user", "#eff6ff", "#f3f4f6"),
                                         color=rx.cond(msg["role"] == "user", "#1e40af", "#374151"),
-                                        size="2",
+                                        font_size="14px", # Markdown usually needs a specific font size
                                         width="fit-content",
                                         align_self=rx.cond(msg["role"] == "user", "flex-end", "flex-start"),
                                     ),

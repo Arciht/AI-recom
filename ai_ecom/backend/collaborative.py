@@ -2,18 +2,16 @@ import pandas as pd
 import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
 
+# Global cache for collaborative components
+_user_item_matrix_cache = None
+_user_similarity_cache = None
+_last_data_len = 0
+
 def collaborative_recommend(data: pd.DataFrame, user_id: str, top_n: int = 10) -> pd.DataFrame:
     """
     Recommend products using User-Based Collaborative Filtering.
-    
-    Args:
-        data: cleaned dataset (clean_data.csv)
-        user_id: numeric user ID from dataset (string or int)
-        top_n: number of recommendations to return
-    
-    Returns:
-        DataFrame with recommended products
     """
+    global _user_item_matrix_cache, _user_similarity_cache, _last_data_len
     
     # Convert user_id to proper type
     user_id = str(user_id)
@@ -21,41 +19,46 @@ def collaborative_recommend(data: pd.DataFrame, user_id: str, top_n: int = 10) -
     # Check if user exists in dataset
     if user_id not in data['user_id'].astype(str).unique():
         print(f"User ID {user_id} not found. Returning top rated products instead.")
-        return rating_based_recommend(data, top_n)  # Fallback (we'll create this later)
+        return rating_based_recommend(data, top_n)
 
-    # Create User-Item Matrix (User ID × Product ID)
-    user_item_matrix = data.pivot_table(
-        index='user_id',
-        columns='product_id',
-        values='rating',
-        aggfunc='mean'
-    ).fillna(0)
+    # Use cached components if data hasn't changed
+    if _user_item_matrix_cache is None or len(data) != _last_data_len:
+        print("Precomputing User-Item Matrix and User Similarity...")
+        # Create User-Item Matrix (User ID × Product ID)
+        _user_item_matrix_cache = data.pivot_table(
+            index='user_id',
+            columns='product_id',
+            values='rating',
+            aggfunc='mean'
+        ).fillna(0)
 
-    # Compute User Similarity Matrix using Cosine Similarity
-    user_similarity = cosine_similarity(user_item_matrix)
+        # Compute User Similarity Matrix using Cosine Similarity
+        _user_similarity_cache = cosine_similarity(_user_item_matrix_cache)
+        _last_data_len = len(data)
+        print("Precomputation complete.")
 
     # Get index of target user
     try:
-        target_user_index = user_item_matrix.index.get_loc(user_id)
+        target_user_index = _user_item_matrix_cache.index.get_loc(user_id)
     except KeyError:
         print(f"User {user_id} not found in user-item matrix.")
         return pd.DataFrame()
 
     # Get similarity scores for target user
-    user_similarities = user_similarity[target_user_index]
+    user_similarities = _user_similarity_cache[target_user_index]
 
     # Get indices of most similar users (excluding self)
-    similar_users_indices = user_similarities.argsort()[::-1][1:top_n*2]  # Get more to have enough recommendations
+    similar_users_indices = user_similarities.argsort()[::-1][1:top_n*2]
 
     # Collect recommended products
     recommended_product_ids = set()
 
     for sim_user_index in similar_users_indices:
-        sim_user_id = user_item_matrix.index[sim_user_index]
+        sim_user_id = _user_item_matrix_cache.index[sim_user_index]
         
         # Products rated highly by similar user
-        sim_user_ratings = user_item_matrix.iloc[sim_user_index]
-        target_user_ratings = user_item_matrix.iloc[target_user_index]
+        sim_user_ratings = _user_item_matrix_cache.iloc[sim_user_index]
+        target_user_ratings = _user_item_matrix_cache.iloc[target_user_index]
 
         # Products that similar user liked but target user hasn't rated yet
         candidate_products = sim_user_ratings[(sim_user_ratings > 3.5) & 

@@ -21,7 +21,7 @@ from ai_ecom.pages.recommendations import recommendations_page
 from ai_ecom.pages.cart import cart_page
 from ai_ecom.pages.checkout import checkout_page
 from ai_ecom.pages.payment import payment_page
-from ai_ecom.pages.payment_success import payment_success_page
+from ai_ecom.pages.payment_success import payment_success_page, PaymentSuccessState
 from ai_ecom.pages.wishlist import wishlist_page
 from ai_ecom.pages.orders import orders_page
 from ai_ecom.pages.profile import profile_page
@@ -51,7 +51,7 @@ app.add_page(recommendations_page, route="/recommendations", title="Recommended 
 app.add_page(cart_page, route="/cart", title="Shopping Cart")
 app.add_page(checkout_page, route="/checkout", title="Checkout")
 app.add_page(payment_page, route="/payment", title="Payment")
-app.add_page(payment_success_page, route="/payment-success", title="Success - AI Shop")
+app.add_page(payment_success_page, route="/payment-success", title="Success - AI Shop", on_load=PaymentSuccessState.finalize_order)
 app.add_page(wishlist_page, route="/wishlist", title="My Wishlist")
 app.add_page(orders_page, route="/orders", title="My Orders")
 app.add_page(profile_page, route="/profile", title="My Profile")

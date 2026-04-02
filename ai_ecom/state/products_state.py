@@ -8,6 +8,20 @@ class ProductsState(rx.State):
     all_products: list[dict] = []
     filtered_products: list[dict] = []
 
+    @rx.var
+    def chatbot_context(self) -> str:
+        """Provide a summary of top products for the chatbot context"""
+        if not self.all_products:
+            return "No products available at the moment."
+        
+        context = "Available Products:\n"
+        for p in self.all_products[:15]: # Limit to top 15 for context efficiency
+            name = p.get('product_name', 'Unknown')
+            pid = p.get('product_id', 'N/A')
+            price = p.get('price', 0)
+            context += f"- {name} (ID: {pid}, Price: ₹{price})\n"
+        return context
+
     def set_search_query(self, query: str):
         self.search_query = query
         if not query.strip():
@@ -24,6 +38,10 @@ class ProductsState(rx.State):
             ]
 
     async def load_all_products(self):
+        # Only load if not already loaded to reduce latency
+        if self.all_products:
+            return
+
         try:
             df = get_df()
             if df is None:

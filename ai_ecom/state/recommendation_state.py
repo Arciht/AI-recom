@@ -11,6 +11,10 @@ class RecommendationState(rx.State):
 
     async def load_recommendations(self):
         """Load recommendations based on current user state"""
+        # Only load if not already loaded to reduce latency
+        if self.recommendations:
+            return
+
         self.is_loading = True
 
         try:

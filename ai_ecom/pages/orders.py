@@ -30,8 +30,8 @@ def order_item_row(item: OrderItem):
     return rx.hstack(
         rx.text(item.name, size="3", color="gray.700"),
         rx.spacer(),
-        rx.text(rx.format("x{}", item.qty), size="2", color="gray.400"),
-        rx.text(rx.format("₹{}", item.price), size="3", font_weight="medium"),
+        rx.text("x" + item.qty.to_string(), size="2", color="gray.400"),
+        rx.text("₹" + item.price.to_string(), size="3", font_weight="medium"),
         width="100%",
     )
 

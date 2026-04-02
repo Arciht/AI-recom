@@ -1,25 +1,32 @@
 import reflex as rx
 
 class CartState(rx.State):
-    cart_items: list[dict] = rx.LocalStorage([])
-    total: float = rx.LocalStorage(0.0)
+    cart_items: list[dict] = rx.LocalStorage([], name="cart_items_v4")
+    total: float = rx.LocalStorage(0.0, name="cart_total_v4")
+
+    @rx.var
+    def total_items(self) -> int:
+        """Calculate total number of items in cart (sum of quantities)"""
+        count = 0
+        for item in self.cart_items:
+            if isinstance(item, dict):
+                count += int(item.get("quantity", 1))
+        return count
 
     def add_to_cart(self, product: dict):
         if not isinstance(product, dict):
-            print(f"Error: product is not a dict, it is {type(product)}")
             return rx.toast("Error adding to cart", color_scheme="red")
             
         # Check if product already exists
         new_cart = []
         found = False
         for item in self.cart_items:
-            # Defensive check for LocalStorage data
             if not isinstance(item, dict):
                 continue
                 
             if str(item.get("product_id")) == str(product.get("product_id")):
                 item_copy = item.copy()
-                item_copy["quantity"] = item_copy.get("quantity", 1) + 1
+                item_copy["quantity"] = int(item_copy.get("quantity", 1)) + 1
                 new_cart.append(item_copy)
                 found = True
             else:
@@ -42,13 +49,12 @@ class CartState(rx.State):
     def update_quantity(self, product_id: str, delta: int):
         new_cart = []
         for item in self.cart_items:
-            if str(item.get("product_id")) == str(product_id):
+            if isinstance(item, dict) and str(item.get("product_id")) == str(product_id):
                 item_copy = item.copy()
-                new_qty = item_copy.get("quantity", 1) + delta
+                new_qty = int(item_copy.get("quantity", 1)) + delta
                 if new_qty > 0:
                     item_copy["quantity"] = new_qty
                     new_cart.append(item_copy)
-                # If new_qty <= 0, we don't append it (effectively removing it)
             else:
                 new_cart.append(item)
         self.cart_items = new_cart
@@ -59,14 +65,19 @@ class CartState(rx.State):
         self.total = 0.0
 
     def calculate_total(self):
-        total = 0.0
+        total_val = 0.0
         for item in self.cart_items:
             if isinstance(item, dict):
-                total += float(item.get("price", 0)) * item.get("quantity", 1)
-        self.total = total
+                try:
+                    price = float(item.get("price", 0))
+                    qty = int(item.get("quantity", 1))
+                    total_val += price * qty
+                except (ValueError, TypeError):
+                    continue
+        self.total = float(total_val)
 
 class WishlistState(rx.State):
-    wishlist_items: list[dict] = rx.LocalStorage([])
+    wishlist_items: list[dict] = rx.LocalStorage([], name="wishlist_items_v4")
 
     def toggle_wishlist(self, product: dict):
         if not isinstance(product, dict):

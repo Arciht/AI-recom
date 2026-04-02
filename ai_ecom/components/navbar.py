@@ -64,9 +64,9 @@ def navbar():
                     rx.box(
                         rx.icon("shopping-bag", size=24, color="gray.700"),
                         rx.cond(
-                            CartState.cart_items.length() > 0,
+                            CartState.total_items > 0,
                             rx.badge(
-                                CartState.cart_items.length().to_string(),
+                                CartState.total_items.to_string(),
                                 color_scheme="blue",
                                 border_radius="full",
                                 position="absolute",

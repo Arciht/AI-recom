@@ -1,24 +1,33 @@
 import pandas as pd
 
+# Global cache for popular products
+_avg_ratings_cache = None
+_last_data_len = 0
+
 def rating_based_recommend(data: pd.DataFrame, top_n: int = 10) -> pd.DataFrame:
     """
     Recommend top-rated products (Best for New Users).
     This is a simple but effective popularity-based recommendation.
     """
+    global _avg_ratings_cache, _last_data_len
     
-    # Group by product and calculate average rating and count
-    avg_ratings = data.groupby('product_id').agg({
-        'product_name': 'first',
-        'price': 'first',
-        'rating': 'mean',
-        'rating_count': 'sum',           # Total reviews
-        'image_url': 'first',
-        'tags': 'first',
-        'category': 'first'
-    }).reset_index()
+    if _avg_ratings_cache is None or len(data) != _last_data_len:
+        print("Precomputing popular products...")
+        # Group by product and calculate average rating and count
+        _avg_ratings_cache = data.groupby('product_id').agg({
+            'product_name': 'first',
+            'price': 'first',
+            'rating': 'mean',
+            'rating_count': 'sum',           # Total reviews
+            'image_url': 'first',
+            'tags': 'first',
+            'category': 'first'
+        }).reset_index()
+        _last_data_len = len(data)
+        print("Precomputation complete.")
 
     # Rename for clarity
-    avg_ratings = avg_ratings.rename(columns={'rating': 'avg_rating'})
+    avg_ratings = _avg_ratings_cache.rename(columns={'rating': 'avg_rating'})
 
     # Sort by average rating (descending) and then by number of ratings (for stability)
     top_rated = avg_ratings.sort_values(

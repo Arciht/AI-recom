@@ -9,11 +9,11 @@ load_dotenv()
 class UserState(rx.State):
     """Handles Firebase Authentication + Mapping to Dataset user_id"""
 
-    firebase_uid: str = rx.LocalStorage("")
-    user_id: str = rx.LocalStorage("")           # This will store the integer ID from dataset
-    email: str = rx.LocalStorage("")
-    logged_in: bool = rx.LocalStorage(False)
-    user_type: str = rx.LocalStorage("new")      # "new" or "old"
+    firebase_uid: str = rx.LocalStorage("", name="firebase_uid_v3")
+    user_id: str = rx.LocalStorage("", name="user_id_v3")           # This will store the integer ID from dataset
+    email: str = rx.LocalStorage("", name="user_email_v3")
+    logged_in: bool = rx.LocalStorage(False, name="logged_in_v3")
+    user_type: str = rx.LocalStorage("new", name="user_type_v3")      # "new" or "old"
     error_message: str = ""
 
     # Login Form
@@ -176,6 +176,37 @@ class UserState(rx.State):
 
         except Exception as e:
             self.error_message = f"Signup failed: {str(e)}"
+
+    def forgot_password(self):
+        if not self.login_email:
+            self.error_message = "Please enter your email address"
+            return
+
+        api_key = os.getenv("FIREBASE_API_KEY", "YOUR_FIREBASE_WEB_API_KEY_HERE")
+
+        if api_key == "YOUR_FIREBASE_WEB_API_KEY_HERE":
+            return rx.toast(f"Mock: Password reset email sent to {self.login_email}")
+
+        try:
+            payload = {
+                "requestType": "PASSWORD_RESET",
+                "email": self.login_email
+            }
+
+            response = requests.post(
+                f"https://identitytoolkit.googleapis.com/v1/accounts:sendOobCode?key={api_key}",
+                json=payload
+            )
+            data = response.json()
+
+            if "error" in data:
+                self.error_message = data["error"]["message"].replace("_", " ")
+                return
+
+            return rx.toast(f"Password reset email sent to {self.login_email}")
+
+        except Exception as e:
+            self.error_message = f"Failed to send reset email: {str(e)}"
 
     def logout(self):
         self.firebase_uid = ""
